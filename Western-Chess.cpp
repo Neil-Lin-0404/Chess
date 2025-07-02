@@ -1,9 +1,15 @@
 // TODO 到時候新增顏色
 // Started Making Date : 2025/7/1
+// board[8- toCol][toRow - 'a'] (Important)
 #include <bits/stdc++.h>
 
 using namespace std;
 // 當一些不合法 或是成功該發的訊息
+/*
+============================================================================================
+                                            訊息
+============================================================================================
+*/
 namespace Messages
 {
     void illegalMove()
@@ -36,30 +42,182 @@ namespace Messages
     }
 
 };
-// 兵的規則
-class Pawn
+/*
+============================================================================================
+                                            棋盤
+============================================================================================
+*/
+class Board
 {
 public:
-    // 大概的偵測架構
-    /*
-    canMove -> 偵測是否為斜對角
-    是 則進入canAttack
-    否則 偵測移動距離是否唯一格
-        是 則move
-        否則偵測是否為兩格
-            是 則看是不是第一步
-            否則不合法
-    */
-    // 是否可移動
-    bool canMove(Board &board, int fromRow, char fromCol, int toRow, char toCol, bool isWhiteTurn) const
+    vector<vector<char>> board =
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    };
+    // Board() { init(); }
+    // ====================初始化棋盤====================
+    void init()
+    {
+        board = {
+            {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
+            {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
+            {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}};
+    }
+    // ====================輸出棋盤====================
+    void print() const
+    {
+        cout << "      W H I T E" << endl;
+        cout << "  a b c d e f g h" << endl;
+        for (int i = 0; i < 8; ++i)
+        {
+            cout << 8 - i << " ";
+            for (int j = 0; j < 8; ++j)
+            {
+                cout << board[i][j] << " ";
+            }
+            cout << endl;
+        }
+        cout << "     B L A C K" << endl;
+    }
+    // ====================判斷是否出界====================
+    bool inBounds(char toRow, int toColumn) const
+    { // 出界判斷
+        if (toRow >= 0 && toRow < 8 && toColumn >= 0 && toColumn < 8)
+        {
+            cerr << "[DEBUG] InBounds check passed row:" << toRow << " column: " << toColumn << endl;
+            return 1;
+        }
+        cerr << "[DEBUG] InBounds check failed" << endl;
+        Messages::illegalMove();
+        return 0;
+    }
+    // 查看輸入的地址row , column 是否有棋子 有則返回true 否則 false
+    // ====================看是否已被佔領====================
+    bool isOccupied(char toRow, int toCol) const
+    { // 是否有棋子
+        if (board[8 - toCol][toRow - 'a'] == ' ')
+        {
+            cerr << "[DEBUG] There is no piece at row: " << toRow << " column: " << toCol << endl;
+            return 0; // 沒有棋子
+        }
+        cerr << "[DEBUG] There is a piece at row: " << toRow << " column: " << toCol << endl;
+        cerr << "[DEBUG] Piece: " << board[8 - toCol][toRow - 'a'] << endl;
+        return 1;
+    }
+    // ====================判斷是否同隊====================
+    bool onSameTeam(char toRow, int toCol, bool isWhiteTurn) const
+    { // 給canAttack 使用，判斷是否同隊
+        if (isupper(board[8 - toCol][toRow - 'a']) && !isWhiteTurn || !(isupper(board[8 - toCol][toRow - 'a']) && isWhiteTurn))
+        {
+            cerr << "[DEBUG] on Same Team check , result : true" << endl;
+            return 1; // 同隊
+        }
+        cerr << "[DEBUG] on Same Team check , result : false" << endl;
+        return 0;
+    }
+    // ====================判斷該棋子是否為現在輪到的選手可移動的====================
+    bool canMovePiece(char fromRow, int fromCol, bool isWhiteTurn) const
+    {
+        char piece = board[8 - fromCol][fromRow - 'a'];
+        if (piece == ' ' ||
+            isupper(piece) && isWhiteTurn ||
+            !isupper(piece) && !isWhiteTurn)
+        {
+            cerr << "[DEBUG] Unable to move Piece" << endl
+                 << " Row: " << fromRow << " Col: " << fromCol << endl;
+            cerr << "[DEBUG] Piece: " << board[8 - fromCol][fromRow - 'a'] << endl;
+            cerr << "[DEBUG] isWhiteTurn: " << isWhiteTurn << endl;
+            return 0; // 無法移動棋子
+        }
+        cerr << "[DEBUG] Able to Move piece row: " << fromRow << " column: " << fromCol << endl;
+        return 1; // 可以移動棋子
+    }
+    // ====================升變====================
+    void promote(char toRow, int toCol, bool isWhiteTurn)
+    { // 處理升變
+        cerr << "[DEBUG] Executed!" << endl;
+        bool changed = false;
+        if (!isWhiteTurn)
+        {
+            char piece;
+            while (!changed)
+            {
+                cout << "Promote to (Q/R/B/N): ";
+                cin >> piece;
+                cerr << "[DEBUG] User chose: " << piece << endl;
+                if (piece == 'Q' || piece == 'R' || piece == 'B' || piece == 'N')
+                {
+                    board[8 - toCol][toRow - 'a'] = piece; // 更新棋盤
+                    cerr << "[DEBUG] Updated!" << endl;
+                    changed = true;
+                }
+                else
+                    Messages::illegalPromotion(); // 不合法的升變
+            }
+        }
+        else if (isWhiteTurn)
+        {
+            char piece;
+            while (!changed)
+            {
+                cout << "Promote to (q/r/b/n): ";
+                cin >> piece;
+                cerr << "[DEBUG] User chose: " << piece << endl;
+                if (piece == 'q' || piece == 'r' || piece == 'b' || piece == 'n')
+                {
+                    board[8 - toCol][toRow - 'a'] = piece; // 更新棋盤
+                    cerr << "[DEBUG] Updated!" << endl;
+                    changed = true;
+                }
+                else
+                    Messages::illegalPromotion(); // 不合法的升變
+            }
+        }
+        else
+            cerr << "[DEBUG] The upper stuff didn't execute" << endl;
+    }
+    // ====================移動棋子====================
+    void movePiece(char fromRow, int fromCol, char toRow, int toCol)
+    { // 直接更新棋盤
+        board[8 - toCol][toRow - 'a'] = board[8 - fromCol][fromRow - 'a'];
+        board[8 - fromCol][fromRow - 'a'] = ' ';
+    }
+};
+/*
+============================================================================================
+                                            兵
+============================================================================================
+*/
+class Pawn
+{
+    bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     { // 如果不是同一行
         if (fromRow != toRow)
         {
             // 看是否能攻打
+            if (fromCol == toCol)
+            {
+                cerr << "[DEBUG] Illegal Move at Pawn canMove , second if (fromCol == toCol)" << endl;
+                Messages::illegalMove();
+                return 0;
+            }
             if (canAttack(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
                 board.movePiece(fromRow, fromCol, toRow, toCol);
             else
             {
+                cerr << "[DEBUG] at First if-> second if-> else" << endl;
                 Messages::illegalMove();
                 return false; // 不是斜對角
             }
@@ -70,30 +228,28 @@ public:
         {
             if (abs(fromRow - toRow) == 1)
             {
-                if (board.isOccupied(toRow, toCol, isWhiteTurn))
-                    return false;                                // 假設這裡是偵測是否有棋子
+                if (board.isOccupied(toRow, toCol))
+                    return false;                                // 假設這裡是偵測是有棋子
                 board.movePiece(fromRow, fromCol, toRow, toCol); // 移動棋子
                 Messages::moveSuccess();
                 if (canPromote(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
                 {
-                    board.promote(board, toRow, toCol,isWhiteTurn); // 處理升變
+                    board.promote(toRow, toCol, isWhiteTurn); // 處理升變
                 } // 處理升變
                 return true;
             }
         }
         return false;
     }
-    // 是否可攻擊
-    // canAttack 要處理是否是row 和 col 都有移動 且合法
-    bool canAttack(Board &board, int fromRow, char fromCol, int toRow, char toCol, bool isWhiteTurn) const
+    bool canAttack(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     {
         if (isWhiteTurn)
         {
-            if (abs(fromRow - toRow) == 1 && (fromCol - toCol == 1 || fromCol - toCol == -1))
+            if (abs(fromRow - toRow) == 1 && abs(fromCol - toCol == 1)) // 這裡看是否為斜對角
             {
-                if (board.isOccupied(toRow, toCol, isWhiteTurn)) // 假設這裡是偵測是否有棋子
+                if (board.isOccupied(toRow, toCol)) // 這裡是偵測是否有棋子
                 {
-                    if (board.onSameTeam(toRow, toCol, fromRow, fromCol, isWhiteTurn)) // 假設這裡是偵測是否同隊
+                    if (board.onSameTeam(toRow, toCol,isWhiteTurn)) // 這裡是偵測是否同隊
                     {
                         Messages::illegalAttack();
                         return false; // 同隊不能攻擊
@@ -104,167 +260,68 @@ public:
         }
         return false;
     }
-    // 升變 ,車、馬、象或后
-    // 看tocol toRow 是否為空 且是否為8 或 0
-    bool canPromote(Board board, int fromRow, int fromCol, int toRow, int toCol, bool isWhiteTurn) const
+    bool canPromote(Board board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     {
         if(toCol == 1 || toCol == 8)
         {
-            board.promote(board, toRow, toCol, isWhiteTurn); // 處理升變
+            board.promote(toRow, toCol, isWhiteTurn); // 處理升變
             Messages::promotionSuccess();
             return 1; // 返回1代表升變成功
     }
         else return 0;
     }
-    bool canEnPassant() const
-    {
-    }
 };
-// 車的規則
+/*
+============================================================================================
+                                            車
+============================================================================================
+*/
 class Rook
 {
-public:
-    bool canMoveOrAttack(Board &board, int fromRow, char fromCol, int toRow, char toCol, bool isWhiteTurn) const
-    {
-    }
 };
-// 馬的規則
+/*
+============================================================================================
+                                            馬
+============================================================================================
+*/
 class Knight
 {
-public:
-    bool canMoveOrAttack(Board &board, int fromRow, char fromCol, int toRow, char toCol, bool isWhiteTurn) const
-    {
-    }
 };
-// 象的規則
+/*
+============================================================================================
+                                            主教
+============================================================================================
+*/
 class Bishop
 {
-public:
-    bool canMoveOrAttack(Board &board, int fromRow, char fromCol, int toRow, char toCol, bool isWhiteTurn) const
-    {
-    }
 };
-// 后的規則
+/*
+============================================================================================
+                                            后
+============================================================================================
+*/
 class Queen
 {
-public:
-    bool canMoveOrAttack(Board &board, int fromRow, char fromCol, int toRow, char toCol, bool isWhiteTurn) const
-    {
-    }
 };
-// 王的規則
+/*
+============================================================================================
+                                            王
+============================================================================================
+*/
 class King
 {
-public:
-    bool canMoveOrAttack(Board &board, int fromRow, char fromCol, int toRow, char toCol, bool isWhiteTurn) const
-    {
-    }
-    bool checkMate() const
-    {
-    }
 };
-// 棋盤相關 : 升位 , 吃子 , 初始化棋盤 , 將死 , 王車易位處理
-class Board
-{
-    vector<vector<char>> chessBoard; // 8×8
-public:                              // ← 加 public
-    Board() { init(); }
-
-    void init()
-    { // 不用參數、直接填自己的棋盤
-        chessBoard = {
-            {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
-            {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
-            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-            {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
-            {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}};
-    }
-
-    void print() const
-    { // 直接用成員資料
-        cout << "     W H I T E  \n";
-        cout << "  a b c d e f g h\n";
-        for (int i = 0; i < 8; ++i)
-        {
-            cout << 8 - i << ' ';
-            for (int j = 0; j < 8; ++j)
-                cout << chessBoard[i][j] << ' ';
-            cout << '\n';
-        }
-        cout << "    B L A C K  \n";
-    }
-
-    bool inBounds(char row, int column) const
-    { // 出界判斷
-        return row >= 0 && row < 8 && column >= 0 && column < 8;
-    }
-
-    bool isOccupied(int toRow, char toCol, bool isWhiteTurn) const
-    { // 是否有棋子
-        if(chessBoard[toCol][toRow] == ' ')
-            return 0; // 沒有棋子
-        return 1;
-    }
-    bool onSameTeam(int toRow, int toCol, int fromRow, int fromCol, bool isWhiteTurn) const
-    { // 給canAttack 使用，判斷是否同隊
-    }
-    bool canMove(char fromRow,int toCol,bool isWhiteTurn) const
-{
-}
-    bool canAttack() const
-    { // 判斷是否可以攻擊
-    }
-    void promote(Board board, int toRow, int toCol, bool isWhiteTurn)
-    { // 處理升變
-        if (!isWhiteTurn)
-        {
-            char piece;
-            while (0)
-            {
-                cout << "Promote to (Q/R/B/N): ";
-                cin >> piece;
-                piece = toupper(piece); // 轉大寫
-                if (piece == 'Q' || piece == 'R' || piece == 'B' || piece == 'N')
-                    chessBoard[toRow][toCol] = piece; // 更新棋盤
-                else
-                    Messages::illegalPromotion(); // 不合法的升變
-                    continue; // 重新輸入
-            }
-            
-        }
-        else
-        {
-            char piece;
-            while (0)
-            {
-                cout << "Promote to (q/r/b/n): ";
-                cin >> piece;
-                piece = tolower(piece); // 轉大寫
-                if (piece == 'q' || piece == 'r' || piece == 'b' || piece == 'n')
-                    chessBoard[toRow][toCol] = piece; // 更新棋盤
-                else
-                    Messages::illegalPromotion(); // 不合法的升變
-                    continue; // 重新輸入
-            }
-            
-        }
-    }
-    bool canCastle() const
-    { // 判斷是否可以王車易位
-    }
-    void movePiece(int fromRow, char fromCol, int toRow, char toCol)
-    { // 直接更新棋盤
-        chessBoard[toRow][toCol] = chessBoard[fromRow][fromCol];
-        chessBoard[fromRow][fromCol] = ' ';
-    }
-};
-
+/*
+============================================================================================
+                                            主要
+============================================================================================
+*/
 int main()
 {
     Board chessBoard;
     chessBoard.print();
+    chessBoard.promote('a', 1, true);
+    chessBoard.print();
     return 0;
 }
+
