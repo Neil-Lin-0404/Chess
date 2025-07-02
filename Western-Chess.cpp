@@ -211,6 +211,9 @@ public:                              // ← 加 public
     bool onSameTeam(int toRow, int toCol, int fromRow, int fromCol, bool isWhiteTurn) const
     { // 給canAttack 使用，判斷是否同隊
     }
+    bool canMove(char fromRow,int toCol,bool isWhiteTurn) const
+{
+}
     bool canAttack() const
     { // 判斷是否可以攻擊
     }
