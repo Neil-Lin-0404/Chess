@@ -40,6 +40,10 @@ namespace Messages
     {
         cout << "Promotion successful!" << endl;
     }
+    void unableToMovePiece()
+    {
+        cout << "You can't move this Piece!" << endl;
+    }
 
 };
 /*
@@ -53,7 +57,7 @@ public:
     vector<vector<char>> board =
         {
             {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {'b', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
             {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
             {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
             {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
@@ -94,12 +98,13 @@ public:
     // ====================判斷是否出界====================
     bool inBounds(char toRow, int toColumn) const
     { // 出界判斷
-        if (toRow >= 0 && toRow < 8 && toColumn >= 0 && toColumn < 8)
+        if (toRow >= 97 && toRow < 105 && toColumn >= 1 && toColumn < 9)
         {
             cerr << "[DEBUG] InBounds check passed row:" << toRow << " column: " << toColumn << endl;
             return 1;
         }
         cerr << "[DEBUG] InBounds check failed" << endl;
+        cerr << "[DEBUG] toRow: " << toRow << " toColumn: " << toColumn << endl;
         Messages::illegalMove();
         return 0;
     }
@@ -147,7 +152,7 @@ public:
     // ====================升變====================
     void promote(char toRow, int toCol, bool isWhiteTurn)
     { // 處理升變
-        cerr << "[DEBUG] Executed!" << endl;
+        cerr << "[DEBUG] Executed Promote System!" << endl;
         bool changed = false;
         if (!isWhiteTurn)
         {
@@ -194,17 +199,49 @@ public:
         board[8 - toCol][toRow - 'a'] = board[8 - fromCol][fromRow - 'a'];
         board[8 - fromCol][fromRow - 'a'] = ' ';
     }
+    // ====================看一路上是否皆為空====================
+    // 這裡只檢查中間 開頭已檢查 不用檢查 , 尾部需要檢查 來判斷是否要攻擊
+    bool isEmpty(char fromRow, int fromCol, char toRow, int toCol, bool rowOrCol)
+    {
+        // if check row then rowOrCol = 1 , else rowOrCol = 0
+        if (rowOrCol)
+        {
+            int maxi = max(fromCol, toCol), mini = min(fromCol, toCol);
+            for (int i = maxi - 1; i > mini; i--)
+            {
+                if (isOccupied(toRow, i))
+                    return 0;
+            }
+            return 1;
+        }
+        else
+        {
+            char maxi = (char)max(fromRow, toRow), mini = (char)min(fromRow, toRow);
+            for (char i = maxi - 1; i > mini; i--)
+            {
+                if (isOccupied(i, toCol))
+                    return 0;
+            }
+            return 1;
+        }
+        cerr << "[DEBUG] Something went wrong at (class : Board, isEmpty Function!)" << endl;
+        return 0;
+    }
 };
 /*
 ============================================================================================
                                             兵
 ============================================================================================
 */
-// TODO ❗❗❗!!!!待測試!!!!❗❗❗
+// TODO 吃過路兵
 class Pawn
 {
+public:
+    // =====================是否可移動=====================
     bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     { // 如果不是同一行
+        cerr << "[DEBUG] Executed Pawn canMove function!" << endl;
+        
         if (fromRow != toRow)
         {
             // 看是否能攻打
@@ -218,58 +255,82 @@ class Pawn
                 board.movePiece(fromRow, fromCol, toRow, toCol);
             else
             {
-                cerr << "[DEBUG] at First if-> second if-> else" << endl;
+                cerr << "[DEBUG] Pawn canMove at First if-> second if-> else" << endl;
                 Messages::illegalMove();
                 return false; // 不是斜對角
             }
             Messages::moveSuccess();
             return true;
         }
+        // ----------------白方偵測----------------
         if (isWhiteTurn)
         {
-            if (abs(fromRow - toRow) == 1)
+            cerr << "[DEBUG] Pawn is WhiteTurn judging Executed!" << endl;
+            if (fromCol - toCol != 1) // 因為是白方 所以是上到下 fromCol - toCol = 1
             {
-                if (board.isOccupied(toRow, toCol))
-                    return false;                                // 假設這裡是偵測是有棋子
-                board.movePiece(fromRow, fromCol, toRow, toCol); // 移動棋子
-                Messages::moveSuccess();
-                if (canPromote(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
-                {
-                    board.promote(toRow, toCol, isWhiteTurn); // 處理升變
-                } // 處理升變
-                return true;
+                cerr << "[DEBUG] fromCol - toCol result = " << fromCol - toCol << endl;
+                Messages::illegalMove();
+                return 0;
             }
         }
-        return false;
+        // ----------------黑方偵測----------------
+        else
+        {
+            cerr << "[DEBUG] Pawn is BlackTurn judging Executed!" << endl;
+            if (toCol - fromCol != 1) // 因為是黑方 所以是下到上 toCol - fromCol = 1
+            {
+                Messages::illegalMove();
+                return 0;
+            }
+        }
+        if (board.isOccupied(toRow, toCol))
+        {
+            cerr << "[DEBUG] Pawn toRow toCol is Occupied! Returning False" << endl;
+            return false; // 假設這裡是偵測是有棋子
+        }
+        board.movePiece(fromRow, fromCol, toRow, toCol); // 移動棋子
+        Messages::moveSuccess();
+        if (canPromote(toCol))
+        {
+            cerr << "[DEBUG] Executing Promoting Process!" << endl;
+            board.promote(toRow, toCol, isWhiteTurn); // 處理升變
+        } // 處理升變
+        cerr << "[DEBUG] Returning True! Yeahoo" << endl;
+        return true;
     }
+    // =====================是否可攻擊=====================
     bool canAttack(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     {
-        if (isWhiteTurn)
+        cerr << "[DEBUG] Entered canAttack Function!" << endl;
+        // ----------------白方偵測----------------
+        cerr << "[DEBUG] Judging if it is a diagonal move!" << endl;
+        if (abs((fromRow - 'a') - (toRow - 'a')) == 1 && abs(fromCol - toCol) == 1) // 這裡看是否為斜對角
         {
-            if (abs(fromRow - toRow) == 1 && abs(fromCol - toCol == 1)) // 這裡看是否為斜對角
+            cerr << "[DEBUG] Judging if toCol toRow have a piece" << endl;
+            if (board.isOccupied(toRow, toCol)) // 這裡是偵測是否有棋子
             {
-                if (board.isOccupied(toRow, toCol)) // 這裡是偵測是否有棋子
+                cerr << "[DEBUG] Judging if it is on  Same Team!" << endl;
+                if (board.onSameTeam(toRow, toCol, isWhiteTurn)) // 這裡是偵測是否同隊
                 {
-                    if (board.onSameTeam(toRow, toCol,isWhiteTurn)) // 這裡是偵測是否同隊
-                    {
-                        Messages::illegalAttack();
-                        return false; // 同隊不能攻擊
-                    }
-                    return true; // 可以攻擊
+                    Messages::illegalAttack();
+                    return false; // 同隊不能攻擊
                 }
+                cerr << "[DEBUG] Returning True!" << endl;
+                return true; // 可以攻擊
             }
         }
+        cerr << "[DEBUG] Returning False (nooo )" << endl;
         return false;
     }
-    bool canPromote(Board board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
+    // =====================是否可升變=====================
+    bool canPromote(int toCol) const
     {
-        if(toCol == 1 || toCol == 8)
+        if (toCol == 1 || toCol == 8)
         {
-            board.promote(toRow, toCol, isWhiteTurn); // 處理升變
-            Messages::promotionSuccess();
-            return 1; // 返回1代表升變成功
-    }
-        else return 0;
+            return 1; // 返回1代表可升變
+        }
+        else
+            return 0;
     }
 };
 /*
@@ -277,8 +338,52 @@ class Pawn
                                             車
 ============================================================================================
 */
+// TODO 王車易位
 class Rook
 {
+public:
+    bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
+    {
+       
+        bool onSameRow, onSameColumn;
+        if (fromRow == toRow)
+            onSameRow = 1; // 代表要檢查column
+        if (fromCol == toCol)
+            onSameColumn = 1; // 代表要檢查row
+        cerr << "[DEBUG] onSameRow: " << onSameRow << " onSameColumn: " << onSameColumn << endl;
+        if (onSameColumn && onSameRow)
+        {
+            Messages::illegalMove();
+            return 0;
+        }
+        // onSameColumn -> 測row fromRow到toRow 中間是否為空
+        // onSameRow 同理
+        if (onSameColumn || onSameRow)
+        {
+            cerr << "[DEBUG] Entered the judging area of Rook!" << endl;
+            bool rowOrCol = 1;
+            bool empty = true;
+            if (onSameColumn)
+            {
+                rowOrCol = 1;
+            }
+            empty = board.isEmpty(fromRow, fromCol, toRow, toCol, rowOrCol);
+            if (!empty)
+                return 0;
+            if (board.isOccupied(toRow, toCol))
+            {
+                if (board.onSameTeam(toRow, toCol, isWhiteTurn))
+                {
+                    Messages::illegalMove();
+                    return 0;
+                }
+            }
+            board.movePiece(fromRow, fromCol, toRow, toCol);
+            return 1;
+        }
+        Messages::illegalMove();
+        return 0;
+    }
 };
 /*
 ============================================================================================
@@ -287,6 +392,36 @@ class Rook
 */
 class Knight
 {
+public:
+    bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
+    {
+        cerr << "[DEBUG] Enter Knight canMove function!" << endl;
+        bool moveValid = false;
+        if (abs(fromRow - toRow) == 1 && abs(fromCol - toCol) == 2 ||
+            abs(fromRow - toRow) == 2 && abs(fromCol - toCol) == 1)
+            moveValid = true;
+        cerr << "[DEBUG] moveValid = " << moveValid << endl;
+        if (board.isOccupied(toRow, toCol))
+        {
+            cerr << "[DEBUG] Enter Knight canMove function - isOccupied if judging,going for onSameTeam!" << endl;
+            cerr << "[DEBUG] Should be not OnSameTeam if attack" << endl;
+            if (board.onSameTeam(toRow, toCol, isWhiteTurn))
+            {
+                cerr << "[DEBUG] OnSameTeam function executed! of Knight onSameTeam!" << endl;
+                Messages::illegalMove();
+                return 0;
+            }
+        }
+        if (moveValid)
+        {
+            board.movePiece(fromRow, fromCol, toRow, toCol);
+            Messages::moveSuccess();
+            return 1;
+        }
+        cerr << "[DEBUG] moveValid isn't Valid!" << endl;
+        Messages::illegalMove();
+        return 0;
+    }
 };
 /*
 ============================================================================================
@@ -295,6 +430,94 @@ class Knight
 */
 class Bishop
 {
+public:
+    bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
+    {
+        cerr << "[DEBUG] Entered Bishop canMove Function!" << endl;
+        if (fromRow == toRow)
+        {
+            cerr << "[DEBUG] fromRow = toRow" << endl;
+            Messages::illegalMove();
+            return 0;
+        }
+        if (fromCol == toCol)
+        {
+            cerr << "[DEBUG] fromCol = toCol" << endl;
+            Messages::illegalMove();
+            return 0;
+        }
+        if (abs(fromRow - toRow) != abs(fromCol - toCol))
+        {
+            cerr << "[DEBUG] fromRow - toRow = " << abs(fromRow - toRow) << " fromCol - toCol = " << abs(fromCol - toCol) << endl;
+            Messages::illegalMove();
+            return 0;
+        }
+        // 右下 -> fromRow + i, fromCol -i
+        // 左上 -> fromRow - i, fromCol +i
+        // 左下 -> fromRow - i ,fromCol -i
+        // 右上 -> fromRow + i ,fromCol +i
+        bool RightDown = false, LeftUp = false, LeftDown = false, RightUp = false,moveValid=true;
+        if (toRow > fromRow && toCol < fromCol)
+            RightDown = true;
+        else if (toRow < fromRow && toCol > fromCol)
+            LeftUp = true;
+        else if (toRow < fromRow && toCol < fromCol)
+            LeftDown = true;
+        else if (toRow > fromRow && toCol > fromCol)
+            RightUp = true;
+        for (int i = 1; i < abs(fromCol - toCol); i++)
+        {
+            if(RightDown)
+            {
+                if(board.isOccupied(fromRow+i,fromCol -i))
+                {
+                    cerr << "[DEBUG] RightDown for loop Error!"<<endl;
+                    Messages::illegalMove();
+                    return 0;
+                }
+            }
+            else if(LeftUp)
+            {
+                if(board.isOccupied(fromRow-i,fromCol +i))
+                {
+                    cerr << "[DEBUG] LeftUp for loop Error!"<<endl;
+                    Messages::illegalMove();
+                    return 0;
+                }
+            }
+            else if(LeftDown)
+            {
+                if(board.isOccupied(fromRow-i,fromCol -i))
+                {
+                    cerr << "[DEBUG] LeftDown for loop Error!"<<endl;
+                    Messages::illegalMove();
+                    return 0;
+                }
+            }
+            else if(RightUp)
+            {
+                if(board.isOccupied(fromRow+i,fromCol +i))
+                {
+                    cerr << "[DEBUG] RightUp for loop Error!"<<endl;
+                    Messages::illegalMove();
+                    return 0;
+                }
+            }
+        }
+        if(board.isOccupied(toRow,toCol))
+        {
+            if(board.onSameTeam(toRow,toCol,isWhiteTurn))
+            {
+                cerr << "[DEBUG] OCCUPIED AND ONSAMETEAM ,RETURN 0" << endl;
+                Messages::illegalMove();
+                return 0;
+            }
+            cerr << "[DEBUG] OCCUPIED BUT NOT ON SAMETEAM , canATTACK! , return 1" << endl;
+        }
+        board.movePiece(fromRow,fromCol,toRow,toCol);
+        Messages::moveSuccess();
+        return 1;
+    }
 };
 /*
 ============================================================================================
@@ -303,6 +526,7 @@ class Bishop
 */
 class Queen
 {
+public:
 };
 /*
 ============================================================================================
@@ -311,6 +535,7 @@ class Queen
 */
 class King
 {
+public:
 };
 /*
 ============================================================================================
@@ -319,10 +544,13 @@ class King
 */
 int main()
 {
+    // 這裡需要判斷是否inbound && canMovePiece!
     Board chessBoard;
     chessBoard.print();
-    chessBoard.promote('a', 1, true);
+    Bishop bishop;
+    bishop.canMove(chessBoard,'a',7,'c',5,0);
     chessBoard.print();
     return 0;
 }
+
 
