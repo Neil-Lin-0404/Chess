@@ -57,12 +57,12 @@ public:
     vector<vector<char>> board =
         {
             {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-            {'b', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {'q', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
             {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
             {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
             {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
             {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {'p', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
             {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
     };
     // Board() { init(); }
@@ -199,9 +199,9 @@ public:
         board[8 - toCol][toRow - 'a'] = board[8 - fromCol][fromRow - 'a'];
         board[8 - fromCol][fromRow - 'a'] = ' ';
     }
-    // ====================看一路上是否皆為空====================
+    // ====================看一路上是否皆為空==================== 水平 垂直版本
     // 這裡只檢查中間 開頭已檢查 不用檢查 , 尾部需要檢查 來判斷是否要攻擊
-    bool isEmpty(char fromRow, int fromCol, char toRow, int toCol, bool rowOrCol)
+    bool isEmptyVerticalOrHorizontal(char fromRow, int fromCol, char toRow, int toCol, bool rowOrCol) const
     {
         // if check row then rowOrCol = 1 , else rowOrCol = 0
         if (rowOrCol)
@@ -224,8 +224,55 @@ public:
             }
             return 1;
         }
-        cerr << "[DEBUG] Something went wrong at (class : Board, isEmpty Function!)" << endl;
+        cerr << "[DEBUG] Something went wrong at (class : Board, isEmptyVerticalOrHorizontal Function!)" << endl;
         return 0;
+    }
+    // ====================看一路上是否為空==================== 斜對角版本
+    bool isEmptyDiagonal(char fromRow, int fromCol, char toRow, int toCol)
+    {
+        cerr << "[DEBUG] Entered isEmptyDiagonal Function!" << endl;
+        if (abs(fromRow - toRow) != abs(fromCol - toCol))
+        {
+            cerr << "[DEBUG] fromRow - toRow = " << abs(fromRow - toRow) << " fromCol - toCol = " << abs(fromCol - toCol) << endl;
+            return 0;
+        }
+        // 右下 -> fromRow + i, fromCol -i
+        // 左上 -> fromRow - i, fromCol +i
+        // 左下 -> fromRow - i ,fromCol -i
+        // 右上 -> fromRow + i ,fromCol +i
+        bool RightDown = false, LeftUp = false, LeftDown = false, RightUp = false, moveValid = true;
+        if (toRow > fromRow && toCol < fromCol)
+            RightDown = true;
+        else if (toRow < fromRow && toCol > fromCol)
+            LeftUp = true;
+        else if (toRow < fromRow && toCol < fromCol)
+            LeftDown = true;
+        else if (toRow > fromRow && toCol > fromCol)
+            RightUp = true;
+        for (int i = 1; i < abs(fromCol - toCol); i++)
+        {
+            if (RightDown && isOccupied(fromRow + i, fromCol - i))
+            {
+                cerr << "[DEBUG] RightDown for loop Error!" << endl;
+                return 0;
+            }
+            else if (LeftUp && isOccupied(fromRow - i, fromCol + i))
+            {
+                cerr << "[DEBUG] LeftUp for loop Error!" << endl;
+                return 0;
+            }
+            else if (LeftDown && isOccupied(fromRow - i, fromCol - i))
+            {
+                cerr << "[DEBUG] LeftDown for loop Error!" << endl;
+                return 0;
+            }
+            else if (RightUp && isOccupied(fromRow + i, fromCol + i))
+            {
+                cerr << "[DEBUG] RightUp for loop Error!" << endl;
+                return 0;
+            }
+        }
+        return 1;
     }
 };
 /*
@@ -241,7 +288,7 @@ public:
     bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     { // 如果不是同一行
         cerr << "[DEBUG] Executed Pawn canMove function!" << endl;
-        
+
         if (fromRow != toRow)
         {
             // 看是否能攻打
@@ -344,7 +391,7 @@ class Rook
 public:
     bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     {
-       
+
         bool onSameRow, onSameColumn;
         if (fromRow == toRow)
             onSameRow = 1; // 代表要檢查column
@@ -367,7 +414,7 @@ public:
             {
                 rowOrCol = 1;
             }
-            empty = board.isEmpty(fromRow, fromCol, toRow, toCol, rowOrCol);
+            empty = board.isEmptyVerticalOrHorizontal(fromRow, fromCol, toRow, toCol, rowOrCol);
             if (!empty)
                 return 0;
             if (board.isOccupied(toRow, toCol))
@@ -446,75 +493,16 @@ public:
             Messages::illegalMove();
             return 0;
         }
-        if (abs(fromRow - toRow) != abs(fromCol - toCol))
+        if (!(board.isEmptyDiagonal(fromRow, fromCol, toRow, toCol)))
+            return 0;
+        if (board.isOccupied(toRow, toCol) && board.onSameTeam(toRow, toCol, isWhiteTurn))
         {
-            cerr << "[DEBUG] fromRow - toRow = " << abs(fromRow - toRow) << " fromCol - toCol = " << abs(fromCol - toCol) << endl;
+            cerr << "[DEBUG] OCCUPIED AND ONSAMETEAM ,RETURN 0" << endl;
             Messages::illegalMove();
             return 0;
-        }
-        // 右下 -> fromRow + i, fromCol -i
-        // 左上 -> fromRow - i, fromCol +i
-        // 左下 -> fromRow - i ,fromCol -i
-        // 右上 -> fromRow + i ,fromCol +i
-        bool RightDown = false, LeftUp = false, LeftDown = false, RightUp = false,moveValid=true;
-        if (toRow > fromRow && toCol < fromCol)
-            RightDown = true;
-        else if (toRow < fromRow && toCol > fromCol)
-            LeftUp = true;
-        else if (toRow < fromRow && toCol < fromCol)
-            LeftDown = true;
-        else if (toRow > fromRow && toCol > fromCol)
-            RightUp = true;
-        for (int i = 1; i < abs(fromCol - toCol); i++)
-        {
-            if(RightDown)
-            {
-                if(board.isOccupied(fromRow+i,fromCol -i))
-                {
-                    cerr << "[DEBUG] RightDown for loop Error!"<<endl;
-                    Messages::illegalMove();
-                    return 0;
-                }
-            }
-            else if(LeftUp)
-            {
-                if(board.isOccupied(fromRow-i,fromCol +i))
-                {
-                    cerr << "[DEBUG] LeftUp for loop Error!"<<endl;
-                    Messages::illegalMove();
-                    return 0;
-                }
-            }
-            else if(LeftDown)
-            {
-                if(board.isOccupied(fromRow-i,fromCol -i))
-                {
-                    cerr << "[DEBUG] LeftDown for loop Error!"<<endl;
-                    Messages::illegalMove();
-                    return 0;
-                }
-            }
-            else if(RightUp)
-            {
-                if(board.isOccupied(fromRow+i,fromCol +i))
-                {
-                    cerr << "[DEBUG] RightUp for loop Error!"<<endl;
-                    Messages::illegalMove();
-                    return 0;
-                }
-            }
-        }
-        if(board.isOccupied(toRow,toCol))
-        {
-            if(board.onSameTeam(toRow,toCol,isWhiteTurn))
-            {
-                cerr << "[DEBUG] OCCUPIED AND ONSAMETEAM ,RETURN 0" << endl;
-                Messages::illegalMove();
-                return 0;
-            }
             cerr << "[DEBUG] OCCUPIED BUT NOT ON SAMETEAM , canATTACK! , return 1" << endl;
         }
-        board.movePiece(fromRow,fromCol,toRow,toCol);
+        board.movePiece(fromRow, fromCol, toRow, toCol);
         Messages::moveSuccess();
         return 1;
     }
@@ -527,6 +515,67 @@ public:
 class Queen
 {
 public:
+    bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
+    {
+        string direction = directionOfMove(fromRow, fromCol, toRow, toCol);
+        bool rowOrCol;
+        if (direction == "horizontal")
+            rowOrCol = 0;
+        else
+            rowOrCol = 1;
+        if (direction == "vertical" || direction == "horizontal")
+        {
+            if (!(board.isEmptyVerticalOrHorizontal(fromRow, fromCol, toRow, toCol, rowOrCol)))
+            {
+                cerr << "[DEBUG] Queen vertical or horizontal if , error!" << endl;
+                Messages::illegalMove();
+                return 0;
+            }
+            if (board.isOccupied(toRow, toCol))
+            {
+                if (board.onSameTeam(toRow, toCol, isWhiteTurn))
+                {
+                    Messages::illegalMove();
+                    return 0;
+                }
+            }
+            board.movePiece(fromRow, fromCol, toRow, toCol);
+            return 1;
+        }
+        else if (direction == "diagonal")
+        {
+            if (!(board.isEmptyDiagonal(fromRow, fromCol, toRow, toCol)))
+            {
+                cerr << "[DEBUG] Queen Diagonal if, error!" << endl;
+                Messages::illegalMove();
+                return 0;
+            }
+            if (board.isOccupied(toRow, toCol) && board.onSameTeam(toRow, toCol, isWhiteTurn))
+            {
+                cerr << "[DEBUG] OCCUPIED AND ONSAMETEAM ,RETURN 0" << endl;
+                Messages::illegalMove();
+                return 0;
+                cerr << "[DEBUG] OCCUPIED BUT NOT ON SAMETEAM , canATTACK! , return 1" << endl;
+            }
+            board.movePiece(fromRow, fromCol, toRow, toCol);
+            Messages::moveSuccess();
+            return 1;
+        }
+        return 0;
+    }
+    string directionOfMove(char fromRow, int fromCol, char toRow, int toCol)
+    {
+        if (fromRow == toRow && fromCol != toCol)
+            return "vertical";
+        else if (fromRow != toRow && fromCol == toCol)
+            return "horizontal";
+        else
+            return "diagonal";
+        cerr << "[DEBUG] Wtf just happened ? at Queen directionOfMove function" << endl;
+        cerr << "[DEBUG]fromRow = " << fromRow << " fromCol = " << fromCol << endl
+             << " toRow = " << toRow << " toCol = " << toCol << endl;
+        return 0;
+    }
 };
 /*
 ============================================================================================
@@ -536,6 +585,21 @@ public:
 class King
 {
 public:
+    bool canMoveAllJudge(Board &board ,char fromRow,int fromCol,char toRow,int toCol,bool isWhiteTurn)
+    {
+
+    }
+    bool canMoveOrAttack(Board &board,char fromRow,int fromCol,char toRow,int toCol,bool isWhiteTurn)
+    {
+        int fmtr = abs(fromRow-toRow),fmtc=abs(fromCol-toCol);
+        if(fmtr > 1 || fmtc > 1)return 0;
+        if(board.isOccupied(toRow,toCol) && board.onSameTeam(toRow,toCol,isWhiteTurn))return 0;
+        return 1;
+    }
+    bool Castling()
+    {
+        
+    }
 };
 /*
 ============================================================================================
@@ -545,12 +609,11 @@ public:
 int main()
 {
     // 這裡需要判斷是否inbound && canMovePiece!
+    // 這裡需要有have R1 R2 ,r1 r2 有動 為了Castling
     Board chessBoard;
     chessBoard.print();
-    Bishop bishop;
-    bishop.canMove(chessBoard,'a',7,'c',5,0);
+    Queen queen;
+    queen.canMove(chessBoard, 'a', 7, 'a', 2, 1);
     chessBoard.print();
     return 0;
 }
-
-
