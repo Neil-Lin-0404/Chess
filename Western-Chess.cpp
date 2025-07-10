@@ -65,8 +65,11 @@ class Board
 {
 public:
     vector<vector<char>> board;
-    Board() { init();
-    cerr << "[DEBUG]<Function none>class:Board , Called Init!"<<endl; } // 當class Board被宣告的時候 自動執行init 來初始化
+    Board()
+    {
+        init();
+        cerr << "[DEBUG]<Function none>class:Board , Called Init!" << endl;
+    } // 當class Board被宣告的時候 自動執行init 來初始化
     // ====================初始化棋盤====================
     void init()
     {
@@ -83,7 +86,7 @@ public:
     // ====================輸出棋盤====================
     void print() const
     {
-        cout << "      W H I T E" << endl; // 顯示白方
+        cout << "      W H I T E" << endl;   // 顯示白方
         cout << "  a b c d e f g h" << endl; // 顯示row 橫向
         // 顯示整個棋盤
         for (int i = 0; i < 8; ++i)
@@ -110,7 +113,7 @@ public:
             return 1;
         }
         // 沒通過的時候回傳錯誤訊息 然後傳row , col
-        cerr << "[DEBUG] InBounds check failed" << endl;
+        cerr << "[DEBUG] <Function InBounds>class:Board , Failed" << endl;
         cerr << "[DEBUG] toRow: " << toRow << " toColumn: " << toColumn << endl;
         return 0;
     }
@@ -120,59 +123,60 @@ public:
     { // 是否有棋子
         if (board[8 - toCol][toRow - 'a'] == ' ')
         {
-            cerr << "[DEBUG] There is no piece at row: " << toRow << " column: " << toCol << endl;
+            cerr << "[DEBUG]<Function isOccupied>class:board , Row: " << toRow << " Column: " << toCol << endl;
             return 0; // 沒有棋子
         }
-        cerr << "[DEBUG] There is a piece at row: " << toRow << " column: " << toCol << endl;
+        cerr << "[DEBUG]<Function isOccoupied>class:Board , There's a piece at Row: " << toRow << " column: " << toCol << endl;
         cerr << "[DEBUG] Piece: " << board[8 - toCol][toRow - 'a'] << endl;
         return 1; // 有棋子
     }
     // ====================判斷是否同隊====================
     bool onSameTeam(char toRow, int toCol, bool isWhiteTurn) const
     { // 給canAttack 使用，判斷是否同隊
-        cerr << "[DEBUG] isWhite Turn :" << isWhiteTurn << endl;
+        cerr << "[DEBUG]<Function onSameTeam>class:Board , isWhiteTurn :" << isWhiteTurn << endl;
         if ((isupper(board[8 - toCol][toRow - 'a']) && !isWhiteTurn) || (!(isupper(board[8 - toCol][toRow - 'a'])) && isWhiteTurn))
         {
-            cerr << "[DEBUG]: "<<(isupper(board[8 - toCol][toRow - 'a']) && !isWhiteTurn) <<endl;
-            cerr << "[DEBUG]: " << (!(isupper(board[8 - toCol][toRow - 'a'])) && isWhiteTurn) << endl;
-            cerr << "[DEBUG] on Same Team check , result : true" << endl;
+            cerr << "[DEBUG]<Function onSameTeam>class:Board , Valid White: " << (isupper(board[8 - toCol][toRow - 'a']) && !isWhiteTurn) << endl;
+            cerr << "[DEBUG]<Function onSameTeam>class:Board , Valid Black: " << (!(isupper(board[8 - toCol][toRow - 'a'])) && isWhiteTurn) << endl;
+            cerr << "[DEBUG]<Function onSameTeam>class:Board , onSameTeam check : true" << endl;
             return 1; // 同隊
         }
-        cerr << "[DEBUG] on Same Team check , result : false" << endl;
+        cerr << "[DEBUG]<Function onSameTeam>class:Board , check passed -> result false" << endl;
         return 0; // 不同隊
     }
     // ====================判斷該棋子是否為現在輪到的選手可移動的====================
     bool canMovePiece(char fromRow, int fromCol, bool isWhiteTurn) const
     {
         char piece = board[8 - fromCol][fromRow - 'a'];
-        if (piece == ' ' || //判斷是否為空
+        if (piece == ' ' ||                  // 判斷是否為空
             isupper(piece) && isWhiteTurn || // 如果動的是uppercase 字母 然後又是白方
             !isupper(piece) && !isWhiteTurn) // 如果動非uppercase 又是黑方
         {
             // 都輸出沒辦法 然後return 0
-            cerr << "[DEBUG] Unable to move Piece" << endl
+            cerr << "[DEBUG]<Function canMovePiece>class:Board , Unable to Move Piece" << endl
                  << " Row: " << fromRow << " Col: " << fromCol << endl;
             cerr << "[DEBUG] Piece: " << board[8 - fromCol][fromRow - 'a'] << endl;
             cerr << "[DEBUG] isWhiteTurn: " << isWhiteTurn << endl;
             return 0; // 無法移動棋子
         }
         // 否則可以移動
-        cerr << "[DEBUG] Able to Move piece row: " << fromRow << " column: " << fromCol << endl;
+        cerr << "[DEBUG]<Function canMovePiece>class:Board , Able to Move Piece Row: " << fromRow << " column: " << fromCol << endl;
         return 1; // 可以移動棋子
     }
     // ====================判斷是否為原地踏步====================
-    bool isMove(char fromRow,int fromCol,char toRow,int toCol)const
+    bool isMove(char fromRow, int fromCol, char toRow, int toCol) const
     {
         // 這裡邏輯比較簡單
-        cerr << "[DEBUG]<Function isMove>class:Board , Entered Function"<<endl;
-        if(fromRow == toRow && fromCol == toCol)return 0;
+        cerr << "[DEBUG]<Function isMove>class:Board , Entered Function" << endl;
+        if (fromRow == toRow && fromCol == toCol)
+            return 0;
         return 1;
     }
     // ====================升變====================
     void promote(char toRow, int toCol, bool isWhiteTurn)
     { // 處理升變
-        cerr << "[DEBUG] Executed Promote System!" << endl;
-        bool changed = false;
+        cerr << "[DEBUG]<Function Promote>class:Board ,Executed Promote System!" << endl;
+        bool changed = false; // 如果有做改變
         if (!isWhiteTurn)
         {
             char piece;
@@ -180,11 +184,11 @@ public:
             {
                 cout << "Promote to (Q/R/B/N): ";
                 cin >> piece;
-                cerr << "[DEBUG] User chose: " << piece << endl;
+                cerr << "[DEBUG]<Function Promote>class:Board , User chose: " << piece << endl;
                 if (piece == 'Q' || piece == 'R' || piece == 'B' || piece == 'N')
                 {
                     board[8 - toCol][toRow - 'a'] = piece; // 更新棋盤
-                    cerr << "[DEBUG] Updated!" << endl;
+                    cerr << "[DEBUG]<Function (function Promote>class:Board , Updated!" << endl;
                     changed = true;
                 }
                 else
@@ -198,11 +202,11 @@ public:
             {
                 cout << "Promote to (q/r/b/n): ";
                 cin >> piece;
-                cerr << "[DEBUG] User chose: " << piece << endl;
+                cerr << "[DEBUG]<Function Promote>class:Board , User chose: " << piece << endl;
                 if (piece == 'q' || piece == 'r' || piece == 'b' || piece == 'n')
                 {
                     board[8 - toCol][toRow - 'a'] = piece; // 更新棋盤
-                    cerr << "[DEBUG] Updated!" << endl;
+                    cerr << "[DEBUG]<Function Promote>class:Board , Updated!" << endl;
                     changed = true;
                 }
                 else
@@ -210,7 +214,7 @@ public:
             }
         }
         else
-            cerr << "[DEBUG] The upper stuff didn't execute" << endl;
+            cerr << "[DEBUG]<Function Promote>class:Board , Tell : The upper stuff didn't execute" << endl;
     }
     // ====================移動棋子====================
     void movePiece(char fromRow, int fromCol, char toRow, int toCol)
@@ -226,7 +230,7 @@ public:
         if (rowOrCol)
         {
             int maxi = max(fromCol, toCol), mini = min(fromCol, toCol);
-            for (int i = maxi - 1; i > mini; i--)
+            for (int i = maxi - 1; i > mini; i--) // 不知道怎麼運作的 但運作了
             {
                 if (isOccupied(toRow, i))
                     return 0;
@@ -243,16 +247,16 @@ public:
             }
             return 1;
         }
-        cerr << "[DEBUG] Something went wrong at (class : Board, isEmptyVerticalOrHorizontal Function!)" << endl;
+        cerr << "[DEBUG]<Function isEmptyVerticalOrHorizontal>class:Board , Something went wrong" << endl;
         return 0;
     }
     // ====================看一路上是否為空==================== 斜對角版本
     bool isEmptyDiagonal(char fromRow, int fromCol, char toRow, int toCol)
     {
-        cerr << "[DEBUG] Entered isEmptyDiagonal Function!" << endl;
+        cerr << "[DEBUG]<Function isEmptyDiagonal>class:Board , Entered isEmptyDiagonal Function!" << endl;
         if (abs(fromRow - toRow) != abs(fromCol - toCol))
         {
-            cerr << "[DEBUG] fromRow - toRow = " << abs(fromRow - toRow) << " fromCol - toCol = " << abs(fromCol - toCol) << endl;
+            cerr << "[DEBUG]<Function isEmptyDiagonal>class:Board ,fromRow - toRow = " << abs(fromRow - toRow) << " fromCol - toCol = " << abs(fromCol - toCol) << endl;
             return 0;
         }
         // 右下 -> fromRow + i, fromCol -i
@@ -268,36 +272,38 @@ public:
             LeftDown = true;
         else if (toRow > fromRow && toCol > fromCol)
             RightUp = true;
+        // for loop 再進入每個if 判斷
         for (int i = 1; i < abs(fromCol - toCol); i++)
         {
             if (RightDown && isOccupied(fromRow + i, fromCol - i))
             {
-                cerr << "[DEBUG] RightDown for loop Error!" << endl;
+                cerr << "[DEBUG]<Function isEmptyDiagonal>class:Board , RightDown for loop Error!" << endl;
                 return 0;
             }
             else if (LeftUp && isOccupied(fromRow - i, fromCol + i))
             {
-                cerr << "[DEBUG] LeftUp for loop Error!" << endl;
+                cerr << "[DEBUG]<Function isEmptyDiagonal>class:Board , LeftUp for loop Error!" << endl;
                 return 0;
             }
             else if (LeftDown && isOccupied(fromRow - i, fromCol - i))
             {
-                cerr << "[DEBUG] LeftDown for loop Error!" << endl;
+                cerr << "[DEBUG]<Function isEmptyDiagonal>class:Board , LeftDown for loop Error!" << endl;
                 return 0;
             }
             else if (RightUp && isOccupied(fromRow + i, fromCol + i))
             {
-                cerr << "[DEBUG] RightUp for loop Error!" << endl;
+                cerr << "[DEBUG]<Function isEmptyDiagonal>class:Board , RightUp for loop Error!" << endl;
                 return 0;
             }
         }
         return 1;
     }
+    // ====================看是什麼棋子====================
     char whatPieceisit(char fromRow, int fromCol)
     {
         char piece = board[8 - fromCol][fromRow - 'a'];
-        
-        cerr << "[DEBUG] What piece is it:  " << piece <<  endl;
+
+        cerr << "[DEBUG]<Function whatPieceisit>class:Board , Picked Piece:  " << piece << endl;
         return piece;
     }
 };
@@ -313,33 +319,43 @@ public:
     // =====================是否可移動=====================
     bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     { // 如果不是同一行
-        cerr << "[DEBUG] Executed Pawn canMove function!" << endl;
-
-        if (fromRow != toRow)
+        cerr << "[DEBUG]<Function canMove>class:Pawn , Executed Pawn canMove function!" << endl;
+        bool firstMove = false;
+        if (fromCol == 2 || 7)
+            firstMove = true; // 給以後判斷移動是否合法
+        if (fromRow != toRow) // 如果不同row
         {
             // 看是否能攻打
-            if (fromCol == toCol)
+            if (fromCol == toCol) // 不同row 同col 代表橫向移動 不合法
             {
-                cerr << "[DEBUG] Illegal Move at Pawn canMove , second if (fromCol == toCol)" << endl;
+                cerr << "[DEBUG]<Function canMove>class:Pawn , horizontal Move" << endl;
                 Messages::illegalMove();
                 return 0;
             }
+            // 判斷是否可攻擊 如果可以 則移動 否則返回
             if (canAttack(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
                 board.movePiece(fromRow, fromCol, toRow, toCol);
             else
             {
-                cerr << "[DEBUG] Pawn canMove at First if-> second if-> else" << endl;
+                cerr << "[DEBUG]<Function canMove>class:Pawn , Diagonal Move but can't attack" << endl;
                 Messages::illegalMove();
                 return false; // 不是斜對角
             }
-            Messages::moveSuccess();
+            Messages::moveSuccess(); // 攻擊成功
             return true;
         }
+        // printf("%s","this");
         // ----------------白方偵測----------------
         if (isWhiteTurn)
         {
-            cerr << "[DEBUG] Pawn is WhiteTurn judging Executed!" << endl;
-            if (fromCol - toCol != 1 &&fromCol - toCol != 2) // 因為是白方 所以是上到下 fromCol - toCol = 1 || 2
+            cerr << "[DEBUG]<Function canMove>class:Pawn , Pawn is WhiteTurn judging Executed!" << endl;
+            if (fromCol - toCol != 1) // 因為是白方 所以是上到下 fromCol - toCol = 1 || 2
+            {
+                cerr << "[DEBUG]<Function canMove>class:Pawn , fromCol - toCol result = " << fromCol - toCol << endl;
+                Messages::illegalMove();
+                return 0;
+            }
+            else if (firstMove && fromCol - toCol != 2) // 第二次移動 可以移動兩格
             {
                 cerr << "[DEBUG] fromCol - toCol result = " << fromCol - toCol << endl;
                 Messages::illegalMove();
@@ -349,55 +365,64 @@ public:
         // ----------------黑方偵測----------------
         else
         {
-            cerr << "[DEBUG] Pawn is BlackTurn judging Executed!" << endl;
-            if (toCol - fromCol != 1&&toCol - fromCol != 2) // 因為是黑方 所以是下到上 toCol - fromCol = 1 || 2
+            cerr << "[DEBUG]<Function canMove>class:Pawn ,Pawn is BlackTurn judging Executed!" << endl;
+            if (toCol - fromCol != 1) // 因為是白方 所以是上到下 toCol - fromCol = 1 || 2
             {
+                cerr << "[DEBUG]<Function canMove>class:Pawn , toCol - fromCol result = " << toCol - fromCol << endl;
+                Messages::illegalMove();
+                return 0;
+            }
+            else if (firstMove && toCol - fromCol != 2) // 第二次移動 可以移動兩格
+            {
+                cerr << "[DEBUG]<Function canMove>class:Pawn , toCol - fromCol result = " << toCol - fromCol << endl;
                 Messages::illegalMove();
                 return 0;
             }
         }
-        if (board.isOccupied(toRow, toCol))
+        //  如果在格數移動都合法 那就進行再一步判斷
+        if (board.isOccupied(toRow, toCol)) // 是否已被佔領
         {
-            cerr << "[DEBUG] Pawn toRow toCol is Occupied! Returning False" << endl;
+            cerr << "[DEBUG]<Function canMove>class:Pawn ,Pawn toRow toCol is Occupied! Returning False" << endl;
             return false; // 假設這裡是偵測是有棋子
         }
         board.movePiece(fromRow, fromCol, toRow, toCol); // 移動棋子
         Messages::moveSuccess();
-        if (canPromote(toCol))
+        if (canPromote(toCol)) // 看是不是可以升變
         {
-            cerr << "[DEBUG] Executing Promoting Process!" << endl;
+            cerr << "[DEBUG]<Function canMove>class:Pawn , Executing Promoting Process!" << endl;
             board.promote(toRow, toCol, isWhiteTurn); // 處理升變
         } // 處理升變
-        cerr << "[DEBUG] Returning True! Yeahoo" << endl;
+        cerr << "[DEBUG]<Function canMove>class:Pawn , Returning True! Yeahoo" << endl;
         return true;
     }
     // =====================是否可攻擊=====================
     bool canAttack(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     {
-        cerr << "[DEBUG] Entered canAttack Function!" << endl;
+        cerr << "[DEBUG]<Function canAttack>class:Pawn , Entered canAttack Function!" << endl;
         // ----------------偵測----------------
-        cerr << "[DEBUG] Judging if it is a diagonal move!" << endl;
+        cerr << "[DEBUG]<Function canAttack>class:Pawn , Judging if it is a diagonal move!" << endl;
         if (abs((fromRow - 'a') - (toRow - 'a')) == 1 && abs(fromCol - toCol) == 1) // 這裡看是否為斜對角
         {
-            cerr << "[DEBUG] Judging if toCol toRow have a piece" << endl;
+            cerr << "[DEBUG]<Function canAttack>class:Pawn , canAttackJudging if toCol toRow have a piece" << endl;
             if (board.isOccupied(toRow, toCol)) // 這裡是偵測是否有棋子
             {
-                cerr << "[DEBUG] Judging if it is on  Same Team!" << endl;
+                cerr << "[DEBUG]<Function canAttack>class:Pawn , Judging if it is on  Same Team!" << endl;
                 if (board.onSameTeam(toRow, toCol, isWhiteTurn)) // 這裡是偵測是否同隊
                 {
                     Messages::illegalAttack();
                     return false; // 同隊不能攻擊
                 }
-                cerr << "[DEBUG] Returning True!" << endl;
+                cerr << "[DEBUG]<Function canAttack>class:Pawn , Returning True!" << endl;
                 return true; // 可以攻擊
             }
         }
-        cerr << "[DEBUG] Returning False (nooo )" << endl;
+        cerr << "[DEBUG]<Function canAttack>class:Pawn , Returning False (nooo )" << endl;
         return false;
     }
     // =====================是否可升變=====================
     bool canPromote(int toCol) const
     {
+        cerr << "[DEBUG]<Function canPromote>class:Pawn , Entered canPromote Function" << endl;
         if (toCol == 1 || toCol == 8)
         {
             return 1; // 返回1代表可升變
@@ -418,12 +443,12 @@ public:
     bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     {
 
-        bool onSameRow=0, onSameColumn=0;
+        bool onSameRow = 0, onSameColumn = 0;
         if (fromRow == toRow)
             onSameRow = 1; // 代表要檢查column
         if (fromCol == toCol)
             onSameColumn = 1; // 代表要檢查row
-        cerr << "[DEBUG] onSameRow: " << onSameRow << " onSameColumn: " << onSameColumn << endl;
+        cerr << "[DEBUG]<Function canMove>class:Rook ,  onSameRow: " << onSameRow << " onSameColumn: " << onSameColumn << endl;
         if (onSameColumn && onSameRow)
         {
             Messages::illegalMove();
@@ -432,17 +457,18 @@ public:
         // onSameColumn -> 測row fromRow到toRow 中間是否為空
         // onSameRow 同理
         if (onSameColumn || onSameRow)
-        {
-            cerr << "[DEBUG] Entered the judging area of Rook!" << endl;
+        { // row = 1 , col = 0
+            cerr << "[DEBUG]<Function canMove>class:Rook , Entered the judging area of Rook!" << endl;
             bool rowOrCol = 1;
-            bool empty = true;
+            bool empty = true; // 看是不是一路空
             if (onSameColumn)
             {
                 rowOrCol = 1;
             }
             empty = board.isEmptyVerticalOrHorizontal(fromRow, fromCol, toRow, toCol, rowOrCol);
-            if (!empty)
+            if (!empty) // 如果 empty = 0
                 return 0;
+            // 如果是Empty , 看前往的地方是否有被佔領 以及是否在同隊
             if (board.isOccupied(toRow, toCol))
             {
                 if (board.onSameTeam(toRow, toCol, isWhiteTurn))
@@ -451,9 +477,11 @@ public:
                     return 0;
                 }
             }
+            // 移動
             board.movePiece(fromRow, fromCol, toRow, toCol);
             return 1;
         }
+        // 如果上面條件事都沒進去那 我也不知道 就回傳0
         Messages::illegalMove();
         return 0;
     }
@@ -468,30 +496,32 @@ class Knight
 public:
     bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
     {
-        cerr << "[DEBUG] Enter Knight canMove function!" << endl;
-        bool moveValid = false;
+        cerr << "[DEBUG]<Function canMove>class:Knight , Enter Knight canMove function!" << endl;
+        bool moveValid = false; // 一開始初始化移動不合法
         if (abs(fromRow - toRow) == 1 && abs(fromCol - toCol) == 2 ||
             abs(fromRow - toRow) == 2 && abs(fromCol - toCol) == 1)
-            moveValid = true;
-        cerr << "[DEBUG] moveValid = " << moveValid << endl;
+            moveValid = true; // 如果為日走路 則合法
+        cerr << "[DEBUG]<Function canMove>class:Knight , moveValid = " << moveValid << endl;
+        // 這裡不知道為甚麼要先檢查isOccupied , 效能有點降低 但沒關係
+        // 如果Occupied 又onSameTeam 則return
         if (board.isOccupied(toRow, toCol))
         {
-            cerr << "[DEBUG] Enter Knight canMove function - isOccupied if judging,going for onSameTeam!" << endl;
-            cerr << "[DEBUG] Should be not OnSameTeam if attack" << endl;
+            cerr << "[DEBUG]<Function canMove>class:Knight , Enter Knight canMove function - isOccupied if judging,going for onSameTeam!" << endl;
             if (board.onSameTeam(toRow, toCol, isWhiteTurn))
             {
-                cerr << "[DEBUG] OnSameTeam function executed! of Knight onSameTeam!" << endl;
+                cerr << "[DEBUG]<Function canMove>class:Knight , OnSameTeam equals true!" << endl;
                 Messages::illegalMove();
                 return 0;
             }
         }
+        // 如果移動合法 那就movePiece
         if (moveValid)
         {
             board.movePiece(fromRow, fromCol, toRow, toCol);
             Messages::moveSuccess();
             return 1;
         }
-        cerr << "[DEBUG] moveValid isn't Valid!" << endl;
+        cerr << "[DEBUG]<Function canMove>class:Knight , moveValid isn't Valid!" << endl;
         Messages::illegalMove();
         return 0;
     }
@@ -504,29 +534,33 @@ public:
 class Bishop
 {
 public:
+    // 主教移動規則為 斜對角走路 不能是直或橫
+    // 所以下面兩個if 檢查是不是 非斜對角 如果是 則 return false
     bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
     {
-        cerr << "[DEBUG] Entered Bishop canMove Function!" << endl;
+        cerr << "[DEBUG]<Function canMove>class:Bishop , Entered Bishop canMove Function!" << endl;
         if (fromRow == toRow)
         {
-            cerr << "[DEBUG] fromRow = toRow" << endl;
+            cerr << "[DEBUG]<Function Bishop>class:canMove , fromRow = toRow" << endl;
             Messages::illegalMove();
             return 0;
         }
         if (fromCol == toCol)
         {
-            cerr << "[DEBUG] fromCol = toCol" << endl;
+            cerr << "[DEBUG]<Function canMove>class:Bishop , fromCol = toCol" << endl;
             Messages::illegalMove();
             return 0;
         }
+        // 接下來檢查一路上是否都為空 前面有加! 所以會反轉boolean
         if (!(board.isEmptyDiagonal(fromRow, fromCol, toRow, toCol)))
             return 0;
+        // 檢查是否被佔領又再同一行 則return false
         if (board.isOccupied(toRow, toCol) && board.onSameTeam(toRow, toCol, isWhiteTurn))
         {
-            cerr << "[DEBUG] OCCUPIED AND ONSAMETEAM ,RETURN 0" << endl;
+            cerr << "[DEBUG]<Function canMove>class:Bishop , OCCUPIED AND ONSAMETEAM ,RETURN 0" << endl;
             Messages::illegalMove();
             return 0;
-            cerr << "[DEBUG] OCCUPIED BUT NOT ON SAMETEAM , canATTACK! , return 1" << endl;
+            cerr << "[DEBUG]<Function canMove>class:Bishop , OCCUPIED BUT NOT ON SAMETEAM , canATTACK! , return 1" << endl;
         }
         board.movePiece(fromRow, fromCol, toRow, toCol);
         Messages::moveSuccess();
@@ -543,20 +577,24 @@ class Queen
 public:
     bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
     {
+        // 一開始get direciton 雖然是在class Queen 裡面不是 board 但 沒關係吧 哈哈 希望
         string direction = directionOfMove(fromRow, fromCol, toRow, toCol);
-        bool rowOrCol;
+        // row = true , col = false
+        // vertical = true , horizontal =  false
+        bool rowOrCol = false;
         if (direction == "horizontal")
             rowOrCol = 0;
         else
             rowOrCol = 1;
         if (direction == "vertical" || direction == "horizontal")
         {
-            if (!(board.isEmptyVerticalOrHorizontal(fromRow, fromCol, toRow, toCol, rowOrCol)))
+            if (!(board.isEmptyVerticalOrHorizontal(fromRow, fromCol, toRow, toCol, rowOrCol))) // 看一路上是否皆為空
             {
-                cerr << "[DEBUG] Queen vertical or horizontal if , error!" << endl;
+                cerr << "[DEBUG]<Function Queen>class:canMove , Queen vertical or horizontal if , error!" << endl;
                 Messages::illegalMove();
                 return 0;
             }
+            // 被佔領 && 同隊 直接return false
             if (board.isOccupied(toRow, toCol))
             {
                 if (board.onSameTeam(toRow, toCol, isWhiteTurn))
@@ -570,18 +608,19 @@ public:
         }
         else if (direction == "diagonal")
         {
+            // 斜對角移動 check 一路上是否為空
             if (!(board.isEmptyDiagonal(fromRow, fromCol, toRow, toCol)))
             {
-                cerr << "[DEBUG] Queen Diagonal if, error!" << endl;
+                cerr << "[DEBUG]<Function canMove>class:Queen , Queen Diagonal if, error!" << endl;
                 Messages::illegalMove();
                 return 0;
             }
             if (board.isOccupied(toRow, toCol) && board.onSameTeam(toRow, toCol, isWhiteTurn))
             {
-                cerr << "[DEBUG] OCCUPIED AND ONSAMETEAM ,RETURN 0" << endl;
+                cerr << "[DEBUG]<Function canMove>class:Queen , OCCUPIED AND ONSAMETEAM ,RETURN 0" << endl;
                 Messages::illegalMove();
                 return 0;
-                cerr << "[DEBUG] OCCUPIED BUT NOT ON SAMETEAM , canATTACK! , return 1" << endl;
+                cerr << "[DEBUG]<Function canMove>class:Queen , OCCUPIED BUT NOT ON SAMETEAM , canATTACK! , return 1" << endl;
             }
             board.movePiece(fromRow, fromCol, toRow, toCol);
             Messages::moveSuccess();
@@ -592,13 +631,14 @@ public:
     string directionOfMove(char fromRow, int fromCol, char toRow, int toCol)
     {
         if (fromRow == toRow && fromCol != toCol)
-            return "vertical";
+            return "vertical"; // fromRow = toRow -> 同一排 -> vertical 移動
         else if (fromRow != toRow && fromCol == toCol)
-            return "horizontal";
+            return "horizontal"; // fromCol = toCol -> 同一列 ->horizontal 移動
         else
             return "diagonal";
-        cerr << "[DEBUG] Wtf just happened ? at Queen directionOfMove function" << endl;
-        cerr << "[DEBUG]fromRow = " << fromRow << " fromCol = " << fromCol << endl
+        // 不知道這cerr是怎樣 哈哈 反正如果都不是就出錯 但應該不太可能
+        cerr << "[DEBUG]<Function directionOfMove>class:Queen , Wtf just happened ? at Queen directionOfMove function" << endl;
+        cerr << "[DEBUG]<Function directionOfMove>class:Queen ,fromRow = " << fromRow << " fromCol = " << fromCol << endl
              << " toRow = " << toRow << " toCol = " << toCol << endl;
         return 0;
     }
@@ -611,87 +651,111 @@ public:
 class King
 {
 public:
+    // 這裡還要補上 checkMate , castling , canMove or Attack
     bool canMoveAllJudge(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
     {
+        // TODO 記得先判斷是否為castling 再進行canMove canAttack 判斷function
+        
     }
     bool canMoveOrAttack(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
     {
+        // fmt = from minus to , r = row , c = column
+        // fromRow minus toRow , fromColumn minus to Column
         int fmtr = abs(fromRow - toRow), fmtc = abs(fromCol - toCol);
         if (fmtr > 1 || fmtc > 1)
             return 0;
+        // 大於1 則return false
+        // 被佔領又同隊 return 0
         if (board.isOccupied(toRow, toCol) && board.onSameTeam(toRow, toCol, isWhiteTurn))
             return 0;
         return 1;
     }
     bool canCastling(Board &board, char fromRookRow, int fromRookCol, char fromKingRow, int fromKingCol)
     {
-        cerr << "[DEBUG] Entered class King , Castling Function!" << endl;
-        if (fromRookCol != fromKingCol)
+        cerr << "[DEBUG]<Function canCastling>class:King , Entered class King , Castling Function!" << endl;
+        if (fromRookCol != fromKingCol) // 只有可能是橫向 不可能縱向 所以檢查col
         {
-            cerr << "[DEBUG] fromRookCol != fromKingCol!" << endl;
-            cerr << "[DEBUG] fromRookCol = " << fromRookCol << " fromKingCol = " << fromKingCol << endl;
+            cerr << "[DEBUG]<Function canCastling>class:King , fromRookCol != fromKingCol!" << endl;
+            cerr << "[DEBUG]<Function canCastling>class:King , fromRookCol = " << fromRookCol << " fromKingCol = " << fromKingCol << endl;
             Messages::illegalMove();
-            return 0;
+            return 0;  
         }
         if (!(board.isEmptyVerticalOrHorizontal(fromRookRow, fromRookCol, fromKingRow, fromKingCol, 1)))
             return 0;
-
+        Castling(board,fromRookRow,fromRookCol,fromKingRow,fromKingCol);
         return 1;
+    }
+    void Castling(Board &board,char fromRookRow,int fromRookCol,char fromKingRow,int fromKingCol)
+    {
+        int distances = abs(fromRookRow-fromKingRow);
+        if(distances == 2) // 短易位
+        {
+            board.movePiece(fromKingRow,fromKingCol,fromKingRow+2,fromKingCol);
+            board.movePiece(fromRookRow,fromRookCol,fromRookRow-2,fromRookCol);
+        }
+        else if(distances == 3) // 長易位
+        {
+            board.movePiece(fromKingRow,fromKingCol,fromKingRow-2,fromKingCol); // 向左移2格
+            board.movePiece(fromRookRow,fromRookCol,fromRookRow+3,fromRookCol); // 向右移3格
+        }
     }
 };
 class Game
 {
 public:
-    bool choosePiece(Board&board ,char fromRow,int fromCol,char toRow,int toCol,bool isWhiteTurn)const
+    // 這裡是尋找棋子
+    pair<char, int> choosePiece(Board &board, bool isWhiteTurn) const
     {
         char row;
         int col;
-        if(isWhiteTurn) cout << "White Turn!" << endl;
-        else cout << "Black Turn!" << endl;
+        if (isWhiteTurn)
+            cout << "White Turn!" << endl;
+        else
+            cout << "Black Turn!" << endl;
         cout << "Enter the coordinate to move!(row,col)" << endl;
         cin >> row >> col;
         pair<char, int> p;
         p.first = row;
         p.second = col;
-        char piece = board.board[8- p.second][p.first - 'a'];
-        bool canOrNot = judgePiecesCanMove(board ,fromRow,fromCol,toRow,toCol,isWhiteTurn,piece);
 
+        return p;
     }
-    bool judgePiecesCanMove(Board &board ,char fromRow,int fromCol,char toRow,int toCol,bool isWhiteTurn,char piece)const
+    bool judgePiecesCanMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn, char piece) const
     {
-        if(piece == 'r' || piece == 'R')
+        if (piece == 'r' || piece == 'R')
         {
             Rook rook;
-            rook.canMove(board,fromRow,fromCol,toRow,toCol,isWhiteTurn);
+            rook.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
         }
-        else if(piece == 'q' || piece == 'Q')
+        else if (piece == 'q' || piece == 'Q')
         {
             Queen queen;
-            queen.canMove(board,fromRow,fromCol,toRow,toCol,isWhiteTurn);
+            queen.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
         }
-        else if(piece == 'b' || piece == 'B')
+        else if (piece == 'b' || piece == 'B')
         {
             Bishop bishop;
-            bishop.canMove(board,fromRow,fromCol,toRow,toCol,isWhiteTurn);
+            bishop.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
         }
-        else if(piece == 'p' || piece == 'P')
+        else if (piece == 'p' || piece == 'P')
         {
             Pawn pawn;
-            pawn.canMove(board,fromRow,fromCol,toRow,toCol,isWhiteTurn);
+            pawn.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
         }
-        else if(piece == 'k' || piece == 'K')
+        else if (piece == 'k' || piece == 'K')
         {
             King king;
-            king.canMoveAllJudge(board,fromRow,fromCol,toRow,toCol,isWhiteTurn);
+            king.canMoveAllJudge(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
         }
-        else if(piece == 'n' || piece == 'N')
+        else if (piece == 'n' || piece == 'N')
         {
             Knight knight;
-            knight.canMove(board,fromRow,fromCol,toRow,toCol,isWhiteTurn);
+            knight.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
         }
         else
-        return 0;
+            return 0;
     }
+    // 這裡主要是get 使用者輸入data
     pair<char, int> moveToCoordinate()
     {
         char row;
@@ -714,8 +778,8 @@ int main()
     // 這裡需要判斷是否inbound && canMovePiece!
     // if 第一個座標 && 第二個座標 都為同一方 && King + Rook -> 額外判斷
     // 這裡需要有have RR(h,1) RL(a,1) ,rR(h,8) rL(a,8) 有動 為了Castling
-    bool rerun = true;
-    char reRunorNot;
+    bool rerun = true; // 一開始預設重新開局
+    char reRunorNot;   // 一開始設 最後會用
     while (rerun)
     {
         char GameStartOrNo;
@@ -725,45 +789,54 @@ int main()
         cin >> GameStartOrNo;
         while (GameStartOrNo != 'y' && GameStartOrNo != 'n')
         {
+            // GameStartOrNo != 'y' or 'n' return 0
             cout << "Invalid choice , rechoose y or n" << endl;
             cout << "Do you want to start the game? (y/n):";
             cin >> GameStartOrNo;
         }
         if (GameStartOrNo == 'n')
         {
+            // GameStartOrNo  = 'n' -> return false
             cout << "Alright! See you!" << endl;
-            return 0;
+            return false;
         }
         if (GameStartOrNo == 'y')
             startGame = true;
         while (startGame)
         {
+            // 先把一些變數設好
             bool isWhiteTurn = false, start = false, Black_King_Alive = true, White_King_Alive = true, isCastling = false;
+
             string whoGoesFirst;
             cout << "Who goes  first? (Black/White):";
             cin >> whoGoesFirst;
-            if (whoGoesFirst == "White" || whoGoesFirst == "Black")
+            for(int i=0;i<5;i++)
+            toupper(whoGoesFirst[i]);
+            // 把每個都變成大寫 避免嚴格輸入
+            if (whoGoesFirst == "WHITE" || whoGoesFirst == "BLACK")
                 start = true;
-            if (whoGoesFirst == "White")
-                isWhiteTurn = 1;
+            if (whoGoesFirst == "WHITE")
+                isWhiteTurn = true;
             if (!start)
             {
-                cout << "Rechoose black or white" << endl;
-                continue;
+                cout << "Rechoose Black or White" << endl;
+                continue; // 重複回到while
             }
             while (start)
             {
                 Board board;
                 Game game;
-                vector<vector<char>> PreviousBoard = board.board;
+                vector<vector<char>> PreviousBoard = board.board; // 這裡算是有點懶吧 哈哈 紀錄上一回合的棋盤
+                // 先設好變數
                 bool whiteLeftRook = false, whiteRightRook = false, blackLeftRook = false, blackRightRook = false;
                 while (Black_King_Alive && White_King_Alive)
                 {
-                    pair<char, int> pieceToMove;
+                    pair<char, int> pieceToMove; // 選棋移動
                     board.print();
-                    pieceToMove = game.choosePiece(isWhiteTurn);
+                    pieceToMove = game.choosePiece(board, isWhiteTurn);
+                    // 這裡用兩個判斷 一起判斷 其中一個不合格直接重新
                     while (!(board.inBounds(pieceToMove.first, pieceToMove.second)) || !(board.canMovePiece(pieceToMove.first, pieceToMove.second, isWhiteTurn)))
-                        pieceToMove = game.choosePiece(isWhiteTurn);
+                        pieceToMove = game.choosePiece(board, isWhiteTurn);
                     pair<char, int> positionToMoveTo;
                     board.print();
                     positionToMoveTo = game.moveToCoordinate();
@@ -816,15 +889,16 @@ int main()
                     // 確保不是王車易位
                     if (!isCastling)
                     {
-                        cerr << "[DEBUG] Not Castling! Judging if got attack piece is King" << endl;
+                        cerr << "[DEBUG]<Function Main>class:Main , Not Castling! Judging if got attack piece is King" << endl;
                         // 這裡看攻擊的棋子是否是王 代表被攻擊 被吃掉
-                        if (PreviousBoard[(positionToMoveTo.first-'a')][(8-positionToMoveTo.second)] == 'k')
+                        if (PreviousBoard[(positionToMoveTo.first - 'a')][(8 - positionToMoveTo.second)] == 'k')
                             White_King_Alive = false;
-                        else if (PreviousBoard[(8-positionToMoveTo.second)][(positionToMoveTo.first-'a')] == 'K')
+                        else if (PreviousBoard[(8 - positionToMoveTo.second)][(positionToMoveTo.first - 'a')] == 'K')
                             Black_King_Alive = false;
                     }
-                    cerr << "[DEBUG] Black King Alive: " << Black_King_Alive << endl;
-                    cerr << "[DEBUG] White King Alive: " << White_King_Alive << endl;
+                    // 接下來判斷王活著還是沒活著
+                    cerr << "[DEBUG]<Function Main>class:Main , Black King Alive: " << Black_King_Alive << endl;
+                    cerr << "[DEBUG]<Function Main>class:Main , White King Alive: " << White_King_Alive << endl;
                     if (!White_King_Alive)
                     {
                         start = false;
@@ -842,7 +916,7 @@ int main()
                 }
             }
         }
-
+        // 對局結束 看要不要新的一盤局
         cout << "Start a new game?(y/n)" << endl;
         cin >> reRunorNot;
         if (reRunorNot == 'n')
@@ -850,9 +924,3 @@ int main()
     }
     return 0;
 }
-// Known Bugs! 
-/* 
-King detect alive or not ✅
-原地踏步
-pawn 非第一步卻可以走兩步
-*/
