@@ -306,6 +306,15 @@ public:
         cerr << "[DEBUG]<Function whatPieceisit>class:Board , Picked Piece:  " << piece << endl;
         return piece;
     }
+    // ====================看是不是入堡====================
+    bool isCastling(char fromRow, int fromCol, char toRow, int toCol)
+    {
+        cerr << "[DEBUG]<Function isCastling>class:Board , Judging if can Castling" << endl;
+        if ((whatPieceisit(fromRow, fromCol) == 'K' && whatPieceisit(toRow, toCol) == 'R') || (whatPieceisit(fromRow, fromCol) == 'k' && whatPieceisit(toRow, toCol) == 'r') || (whatPieceisit(fromRow, fromCol) == 'r' && whatPieceisit(toRow, toCol) == 'k') || (whatPieceisit(fromRow, fromCol) == 'R' && whatPieceisit(toRow, toCol) == 'K')) // 判斷如果fromRow fromCol && toRow toCol 皆為車或王
+            return true;
+        cerr << "[DEBUG]<Function isCastling>class:Board , returning false" << endl;
+        return false;
+    }
 };
 /*
 ============================================================================================
@@ -330,7 +339,7 @@ public:
             {
                 cerr << "[DEBUG]<Function canMove>class:Pawn , horizontal Move" << endl;
                 Messages::illegalMove();
-                return 0;
+                return false;
             }
             // 判斷是否可攻擊 如果可以 則移動 否則返回
             if (canAttack(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
@@ -353,13 +362,13 @@ public:
             {
                 cerr << "[DEBUG]<Function canMove>class:Pawn , fromCol - toCol result = " << fromCol - toCol << endl;
                 Messages::illegalMove();
-                return 0;
+                return false;
             }
             else if (firstMove && fromCol - toCol != 2) // 第二次移動 可以移動兩格
             {
                 cerr << "[DEBUG] fromCol - toCol result = " << fromCol - toCol << endl;
                 Messages::illegalMove();
-                return 0;
+                return false;
             }
         }
         // ----------------黑方偵測----------------
@@ -370,13 +379,13 @@ public:
             {
                 cerr << "[DEBUG]<Function canMove>class:Pawn , toCol - fromCol result = " << toCol - fromCol << endl;
                 Messages::illegalMove();
-                return 0;
+                return false;
             }
             else if (firstMove && toCol - fromCol != 2) // 第二次移動 可以移動兩格
             {
                 cerr << "[DEBUG]<Function canMove>class:Pawn , toCol - fromCol result = " << toCol - fromCol << endl;
                 Messages::illegalMove();
-                return 0;
+                return false;
             }
         }
         //  如果在格數移動都合法 那就進行再一步判斷
@@ -425,11 +434,22 @@ public:
         cerr << "[DEBUG]<Function canPromote>class:Pawn , Entered canPromote Function" << endl;
         if (toCol == 1 || toCol == 8)
         {
-            return 1; // 返回1代表可升變
+            return true; // 返回true代表可升變
         }
         else
-            return 0;
+            return false;
     }
+    // =====================判斷是否可以過路吃兵=====================
+    bool canEnpassant(vector<vector<char>>PreviousBoard,char toRow,int toCol)
+    {
+        cerr << "[DEBUG]<Function canEnpassant>class:Pawn , Entred canEnpassant Judging Function" << endl;
+    }
+    // =====================進行過路吃兵=====================
+    void enpassant()
+    {
+
+    }
+
 };
 /*
 ============================================================================================
@@ -654,13 +674,27 @@ public:
     // 這裡還要補上 checkMate , castling , canMove or Attack
     bool canMoveAllJudge(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
     {
+        cerr << "[DEBUG]<Function canMoveAllJudge>class:=King , Entered canMoveAllJudge function" << endl;
         // TODO 記得先判斷是否為castling 再進行canMove canAttack 判斷function
-        
+        if (canCastling(board, fromRow, fromCol, toRow, toCol)) // 如果可以入堡 即成功 return true
+        {
+            cerr << "[DEBUG]<Function canMoveAllJudge>class:King , returning true for canCastling" << endl;
+            return true;
+        }
+        if (canMoveOrAttack(board, fromRow, fromCol, toRow, toCol, isWhiteTurn)) // 如果可以移動或攻打 return true
+        {
+            cerr << "[DEBUG]<Function canMoveAllJudge>class:King , returning true for canMoveoOrAttack" << endl;
+            return true;
+        }
+        // 否則return false
+        cerr << "[DEBUG]<Function canMoveAllJudge>class:King , returning false" << endl;
+        return false;
     }
     bool canMoveOrAttack(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
     {
         // fmt = from minus to , r = row , c = column
         // fromRow minus toRow , fromColumn minus to Column
+        cerr << "[DEBUG]<Function canMoveOrAttack>class:King , Entered canMoveOrAttack Function" << endl;
         int fmtr = abs(fromRow - toRow), fmtc = abs(fromCol - toCol);
         if (fmtr > 1 || fmtc > 1)
             return 0;
@@ -672,31 +706,34 @@ public:
     }
     bool canCastling(Board &board, char fromRookRow, int fromRookCol, char fromKingRow, int fromKingCol)
     {
+        if (!(board.isCastling(fromRookCol, fromRookRow, fromKingRow, fromKingCol)))
+            return 0;
         cerr << "[DEBUG]<Function canCastling>class:King , Entered class King , Castling Function!" << endl;
         if (fromRookCol != fromKingCol) // 只有可能是橫向 不可能縱向 所以檢查col
         {
             cerr << "[DEBUG]<Function canCastling>class:King , fromRookCol != fromKingCol!" << endl;
             cerr << "[DEBUG]<Function canCastling>class:King , fromRookCol = " << fromRookCol << " fromKingCol = " << fromKingCol << endl;
             Messages::illegalMove();
-            return 0;  
+            return 0;
         }
         if (!(board.isEmptyVerticalOrHorizontal(fromRookRow, fromRookCol, fromKingRow, fromKingCol, 1)))
             return 0;
-        Castling(board,fromRookRow,fromRookCol,fromKingRow,fromKingCol);
+        Castling(board, fromRookRow, fromRookCol, fromKingRow, fromKingCol);
         return 1;
     }
-    void Castling(Board &board,char fromRookRow,int fromRookCol,char fromKingRow,int fromKingCol)
+    void Castling(Board &board, char fromRookRow, int fromRookCol, char fromKingRow, int fromKingCol)
     {
-        int distances = abs(fromRookRow-fromKingRow);
-        if(distances == 2) // 短易位
+        cerr << "[DEBUG]<Function Castling>class:King , Executing Castling" << endl;
+        int distances = abs(fromRookRow - fromKingRow);
+        if (distances == 2) // 短易位
         {
-            board.movePiece(fromKingRow,fromKingCol,fromKingRow+2,fromKingCol);
-            board.movePiece(fromRookRow,fromRookCol,fromRookRow-2,fromRookCol);
+            board.movePiece(fromKingRow, fromKingCol, fromKingRow + 2, fromKingCol);
+            board.movePiece(fromRookRow, fromRookCol, fromRookRow - 2, fromRookCol);
         }
-        else if(distances == 3) // 長易位
+        else if (distances == 3) // 長易位
         {
-            board.movePiece(fromKingRow,fromKingCol,fromKingRow-2,fromKingCol); // 向左移2格
-            board.movePiece(fromRookRow,fromRookCol,fromRookRow+3,fromRookCol); // 向右移3格
+            board.movePiece(fromKingRow, fromKingCol, fromKingRow - 2, fromKingCol); // 向左移2格
+            board.movePiece(fromRookRow, fromRookCol, fromRookRow + 3, fromRookCol); // 向右移3格
         }
     }
 };
@@ -810,8 +847,8 @@ int main()
             string whoGoesFirst;
             cout << "Who goes  first? (Black/White):";
             cin >> whoGoesFirst;
-            for(int i=0;i<5;i++)
-            toupper(whoGoesFirst[i]);
+            for (int i = 0; i < 5; i++)
+                toupper(whoGoesFirst[i]);
             // 把每個都變成大寫 避免嚴格輸入
             if (whoGoesFirst == "WHITE" || whoGoesFirst == "BLACK")
                 start = true;
