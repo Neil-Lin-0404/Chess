@@ -310,10 +310,69 @@ public:
     bool isCastling(char fromRow, int fromCol, char toRow, int toCol)
     {
         cerr << "[DEBUG]<Function isCastling>class:Board , Judging if can Castling" << endl;
-        if ((whatPieceisit(fromRow, fromCol) == 'K' && whatPieceisit(toRow, toCol) == 'R') || (whatPieceisit(fromRow, fromCol) == 'k' && whatPieceisit(toRow, toCol) == 'r') || (whatPieceisit(fromRow, fromCol) == 'r' && whatPieceisit(toRow, toCol) == 'k') || (whatPieceisit(fromRow, fromCol) == 'R' && whatPieceisit(toRow, toCol) == 'K')) // 判斷如果fromRow fromCol && toRow toCol 皆為車或王
+        char a = whatPieceisit(fromRow, fromCol);
+        char b = whatPieceisit(toRow, toCol);
+        cerr << "[DEBUG]<Function isCastling>class:Board,a:b =" << a << ':' << b << endl;
+        if (
+            (a == 'K' && b == 'R') ||
+            (a == 'k' && b == 'r') ||
+            (a == 'r' && b == 'k') ||
+            (a == 'R' && b == 'K'))
+        // 判斷如果fromRow fromCol && toRow toCol 皆為車或王
+        {
+            cerr << "[DEBUG]<Function isCastling>class:Board, Returning true" << endl;
             return true;
+        }
         cerr << "[DEBUG]<Function isCastling>class:Board , returning false" << endl;
         return false;
+    }
+    // =====================判斷是否可以過路吃兵=====================
+    bool canEnpassant(vector<vector<char>> PreviousBoard, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
+    {
+        cerr << "[DEBUG]<Function canEnpassant>class:Board , Entred canEnpassant Judging Function" << endl;
+        // 檢查 toRow 那行的Col +1(White) / -1(Black) PreviousBoard 和 board , 如果prev 為空 現board 為有子 那就合法
+        if (isWhiteTurn)
+        {
+            cerr << "[DEBUG] <Function canEnpassant>class:Board,isWhiteTurn = true" << endl;
+            char prevBoardCheckifHavePiece = PreviousBoard[8 - toCol + 1][toRow - 'a'];
+            char curBoardCheckifHavePiece = whatPieceisit(toRow, toCol + 1);
+            cerr << "[DEBUG] <Function canEnpassant>class:Board,PBCIHP,CPCIHP " << prevBoardCheckifHavePiece << ',' << curBoardCheckifHavePiece << endl;
+            if (prevBoardCheckifHavePiece == ' ' && curBoardCheckifHavePiece == 'P') // 這裡檢查大P 因為是要打黑方
+            {
+                Enpassant(fromRow, fromCol, toRow, toCol, isWhiteTurn);
+                cerr << "[DEBUG]<Function canEnpassant>class:Board,returning true" << endl;
+                return true;
+            }
+        }
+        else
+        {
+            char prevBoardCheckifHavePiece = PreviousBoard[8 - toCol - 1][toRow - 'a'];
+            char curBoardCheckifHavePiece = whatPieceisit(toRow, toCol - 1);
+            cerr << "[DEBUG] <Function canEnpassant>class:Board,PBCIHP,CPCIHP " << prevBoardCheckifHavePiece << ',' << curBoardCheckifHavePiece << endl;
+            if (prevBoardCheckifHavePiece == ' ' && curBoardCheckifHavePiece == 'p') // 這裡檢查大P 因為是要打白方
+            {
+                Enpassant(fromRow, fromCol, toRow, toCol, isWhiteTurn);
+                cerr << "[DEBUG]<Function canEnpassant>class:Board,returning true" << endl;
+                return true;
+            }
+        }
+        cerr << "[DEBUG]<Function canEnpassant>class:Board,returning false" << endl;
+        return false;
+    }
+    // =====================進行過路吃兵=====================
+    void Enpassant(char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn)
+    {
+        cerr << "[DEBUG]<Function Enpassant>class:Board,Executing Enpassant move" << endl;
+        if (isWhiteTurn)
+        {
+            movePiece(fromRow, fromCol, toRow, toCol); // 前往斜對角
+            board[8 - toCol - 1][toRow - 'a'] = ' ';   // 吃子
+        }
+        else
+        {
+            movePiece(fromRow, fromCol, toRow, toCol); // 前往斜對角
+            board[8 - toCol + 1][toRow - 'a'] = ' ';   // 吃子
+        }
     }
 };
 /*
@@ -326,12 +385,13 @@ class Pawn
 {
 public:
     // =====================是否可移動=====================
-    bool canMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
+    bool canMove(vector<vector<char>> PreviousBoard, Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     { // 如果不是同一行
         cerr << "[DEBUG]<Function canMove>class:Pawn , Executed Pawn canMove function!" << endl;
         bool firstMove = false;
         if (fromCol == 2 || 7)
-            firstMove = true; // 給以後判斷移動是否合法
+            firstMove = true; // 給以後判斷移動是否合法(第一次移動)
+        cerr << "[DEBUG]<Function canMove>class:Pawn,firstMove = " << firstMove << endl;
         if (fromRow != toRow) // 如果不同row
         {
             // 看是否能攻打
@@ -342,9 +402,7 @@ public:
                 return false;
             }
             // 判斷是否可攻擊 如果可以 則移動 否則返回
-            if (canAttack(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
-                board.movePiece(fromRow, fromCol, toRow, toCol);
-            else
+            if (!(canAttack(PreviousBoard, board, fromRow, fromCol, toRow, toCol, isWhiteTurn)))
             {
                 cerr << "[DEBUG]<Function canMove>class:Pawn , Diagonal Move but can't attack" << endl;
                 Messages::illegalMove();
@@ -353,20 +411,13 @@ public:
             Messages::moveSuccess(); // 攻擊成功
             return true;
         }
-        // printf("%s","this");
         // ----------------白方偵測----------------
         if (isWhiteTurn)
         {
             cerr << "[DEBUG]<Function canMove>class:Pawn , Pawn is WhiteTurn judging Executed!" << endl;
-            if (fromCol - toCol != 1) // 因為是白方 所以是上到下 fromCol - toCol = 1 || 2
+            if ((fromCol - toCol != 1) && (firstMove && fromCol - toCol != 2)) // 因為是白方 所以是上到下 fromCol - toCol = 1 || 2
             {
                 cerr << "[DEBUG]<Function canMove>class:Pawn , fromCol - toCol result = " << fromCol - toCol << endl;
-                Messages::illegalMove();
-                return false;
-            }
-            else if (firstMove && fromCol - toCol != 2) // 第二次移動 可以移動兩格
-            {
-                cerr << "[DEBUG] fromCol - toCol result = " << fromCol - toCol << endl;
                 Messages::illegalMove();
                 return false;
             }
@@ -375,13 +426,7 @@ public:
         else
         {
             cerr << "[DEBUG]<Function canMove>class:Pawn ,Pawn is BlackTurn judging Executed!" << endl;
-            if (toCol - fromCol != 1) // 因為是白方 所以是上到下 toCol - fromCol = 1 || 2
-            {
-                cerr << "[DEBUG]<Function canMove>class:Pawn , toCol - fromCol result = " << toCol - fromCol << endl;
-                Messages::illegalMove();
-                return false;
-            }
-            else if (firstMove && toCol - fromCol != 2) // 第二次移動 可以移動兩格
+            if ((toCol - fromCol != 1) && (firstMove && toCol - fromCol != 2)) // 因為是白方 所以是上到下 toCol - fromCol = 1 || 2
             {
                 cerr << "[DEBUG]<Function canMove>class:Pawn , toCol - fromCol result = " << toCol - fromCol << endl;
                 Messages::illegalMove();
@@ -405,13 +450,17 @@ public:
         return true;
     }
     // =====================是否可攻擊=====================
-    bool canAttack(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
+    bool canAttack(vector<vector<char>> PreviousBoard, Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn) const
     {
         cerr << "[DEBUG]<Function canAttack>class:Pawn , Entered canAttack Function!" << endl;
         // ----------------偵測----------------
         cerr << "[DEBUG]<Function canAttack>class:Pawn , Judging if it is a diagonal move!" << endl;
         if (abs((fromRow - 'a') - (toRow - 'a')) == 1 && abs(fromCol - toCol) == 1) // 這裡看是否為斜對角
         {
+            if (board.canEnpassant(PreviousBoard, fromRow, fromCol, toRow, toCol, isWhiteTurn))
+            {
+                return 1;
+            }
             cerr << "[DEBUG]<Function canAttack>class:Pawn , canAttackJudging if toCol toRow have a piece" << endl;
             if (board.isOccupied(toRow, toCol)) // 這裡是偵測是否有棋子
             {
@@ -422,6 +471,7 @@ public:
                     return false; // 同隊不能攻擊
                 }
                 cerr << "[DEBUG]<Function canAttack>class:Pawn , Returning True!" << endl;
+                board.movePiece(fromRow, fromCol, toRow, toCol);
                 return true; // 可以攻擊
             }
         }
@@ -439,17 +489,6 @@ public:
         else
             return false;
     }
-    // =====================判斷是否可以過路吃兵=====================
-    bool canEnpassant(vector<vector<char>>PreviousBoard,char toRow,int toCol)
-    {
-        cerr << "[DEBUG]<Function canEnpassant>class:Pawn , Entred canEnpassant Judging Function" << endl;
-    }
-    // =====================進行過路吃兵=====================
-    void enpassant()
-    {
-
-    }
-
 };
 /*
 ============================================================================================
@@ -681,6 +720,8 @@ public:
             cerr << "[DEBUG]<Function canMoveAllJudge>class:King , returning true for canCastling" << endl;
             return true;
         }
+        cerr << "[DEBUG]<Function canMoveAllJudge>class:King,canCastling = false" << endl;
+        cerr << "[DEBUG]<Function canMoveAllJudge>class:King, Entering canMoveOrAttack function" << endl;
         if (canMoveOrAttack(board, fromRow, fromCol, toRow, toCol, isWhiteTurn)) // 如果可以移動或攻打 return true
         {
             cerr << "[DEBUG]<Function canMoveAllJudge>class:King , returning true for canMoveoOrAttack" << endl;
@@ -706,7 +747,8 @@ public:
     }
     bool canCastling(Board &board, char fromRookRow, int fromRookCol, char fromKingRow, int fromKingCol)
     {
-        if (!(board.isCastling(fromRookCol, fromRookRow, fromKingRow, fromKingCol)))
+        // 修正參數順序，避免座標混亂
+        if (!(board.isCastling(fromRookRow, fromRookCol, fromKingRow, fromKingCol)))
             return 0;
         cerr << "[DEBUG]<Function canCastling>class:King , Entered class King , Castling Function!" << endl;
         if (fromRookCol != fromKingCol) // 只有可能是橫向 不可能縱向 所以檢查col
@@ -736,7 +778,50 @@ public:
             board.movePiece(fromRookRow, fromRookCol, fromRookRow + 3, fromRookCol); // 向右移3格
         }
     }
+    class checkMate
+    {
+    public:
+        pair<char, int> blackKingPosition, whiteKingPosition;
+        Game game;
+        checkMate()
+        {
+            blackKingPosition = {'e', 1};
+            whiteKingPosition = {'e', 8};
+        }
+        bool isInCheck()
+        {
+            // 每一回合都檢查 且提醒使用者
+        }
+        bool nextStepInCheck()
+        {
+            // 移動王時檢查 然後要提醒使用者
+        }
+        bool canEscapeCheck()
+        {
+            // inCheck 或 nextStepInCheck時檢查 使用者操控 然後檢查是否合法
+        }
+        void updateKingPosition(char toRow, int toCol, bool isWhiteTurn)
+        {
+            if (isWhiteTurn)
+                whiteKingPosition = {toRow, toCol};
+            else
+                blackKingPosition = {toRow, toCol};
+        }
+        bool Check_Horziontal_Vertical_Diagonal_Can_CheckMate(vector<vector<char>> board, char HoVoD, bool isWhiteTurn)
+        {
+            bool
+                King_On_Check_H = false,
+                King_On_Check_V = false,
+                King_On_Check_D = false;
+            
+        }
+    };
 };
+/*
+============================================================================================
+                                        遊戲
+============================================================================================
+*/
 class Game
 {
 public:
@@ -757,40 +842,48 @@ public:
 
         return p;
     }
-    bool judgePiecesCanMove(Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn, char piece) const
+    bool judgePiecesCanMove(vector<vector<char>> PreviousBoard, Board &board, char fromRow, int fromCol, char toRow, int toCol, bool isWhiteTurn, char piece) const
     {
+        bool Moved = false;
         if (piece == 'r' || piece == 'R')
         {
             Rook rook;
-            rook.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
+            if (rook.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
+                Moved = true;
         }
         else if (piece == 'q' || piece == 'Q')
         {
             Queen queen;
-            queen.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
+            if (queen.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
+                Moved = true;
         }
         else if (piece == 'b' || piece == 'B')
         {
             Bishop bishop;
-            bishop.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
+            if (bishop.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
+                Moved = true;
         }
         else if (piece == 'p' || piece == 'P')
         {
             Pawn pawn;
-            pawn.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
+            if (pawn.canMove(PreviousBoard, board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
+                Moved = true;
         }
         else if (piece == 'k' || piece == 'K')
         {
             King king;
-            king.canMoveAllJudge(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
+            if (king.canMoveAllJudge(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
+                Moved = true;
         }
         else if (piece == 'n' || piece == 'N')
         {
             Knight knight;
-            knight.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn);
+            if (knight.canMove(board, fromRow, fromCol, toRow, toCol, isWhiteTurn))
+                Moved = true;
         }
-        else
-            return 0;
+        if (Moved)
+            return true;
+        return false;
     }
     // 這裡主要是get 使用者輸入data
     pair<char, int> moveToCoordinate()
@@ -847,12 +940,9 @@ int main()
             string whoGoesFirst;
             cout << "Who goes  first? (Black/White):";
             cin >> whoGoesFirst;
-            for (int i = 0; i < 5; i++)
-                toupper(whoGoesFirst[i]);
-            // 把每個都變成大寫 避免嚴格輸入
-            if (whoGoesFirst == "WHITE" || whoGoesFirst == "BLACK")
+            if (whoGoesFirst == "White" || whoGoesFirst == "Black")
                 start = true;
-            if (whoGoesFirst == "WHITE")
+            if (whoGoesFirst == "White")
                 isWhiteTurn = true;
             if (!start)
             {
@@ -871,6 +961,7 @@ int main()
                     pair<char, int> pieceToMove; // 選棋移動
                     board.print();
                     pieceToMove = game.choosePiece(board, isWhiteTurn);
+                    char piece = board.whatPieceisit(pieceToMove.first, pieceToMove.second);
                     // 這裡用兩個判斷 一起判斷 其中一個不合格直接重新
                     while (!(board.inBounds(pieceToMove.first, pieceToMove.second)) || !(board.canMovePiece(pieceToMove.first, pieceToMove.second, isWhiteTurn)))
                         pieceToMove = game.choosePiece(board, isWhiteTurn);
@@ -880,55 +971,16 @@ int main()
                     while (!(board.inBounds(positionToMoveTo.first, positionToMoveTo.second)))
                         positionToMoveTo = game.moveToCoordinate();
                     char movePiece = board.whatPieceisit(pieceToMove.first, pieceToMove.second);
-                    // ================兵================
-                    if (movePiece == 'p' || movePiece == 'P')
-                    {
-                        Pawn pawn;
-                        if (!(pawn.canMove(board, pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second, isWhiteTurn)))
-                            continue;
-                    }
-                    // ================后================
-                    else if (movePiece == 'q' || movePiece == 'Q')
-                    {
-                        Queen queen;
-                        if (!(queen.canMove(board, pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second, isWhiteTurn)))
-                            continue;
-                    }
-                    // ================象================
-                    else if (movePiece == 'b' || movePiece == 'B')
-                    {
-                        Bishop bishop;
-                        if (!(bishop.canMove(board, pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second, isWhiteTurn)))
-                            continue;
-                    }
-                    // ================馬================
-                    else if (movePiece == 'n' || movePiece == 'N')
-                    {
-                        Knight knight;
-                        if (!(knight.canMove(board, pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second, isWhiteTurn)))
-                            continue;
-                    }
-                    // ================王================
-                    else if (movePiece == 'k' || movePiece == 'K')
-                    {
-                        King king;
-                        if (!(king.canMoveAllJudge(board, pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second, isWhiteTurn)))
-                            continue;
-                    }
-                    // ================車================
-                    else if (movePiece == 'r' || movePiece == 'R')
-                    {
-                        Rook rook;
-                        if (!(rook.canMove(board, pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second, isWhiteTurn)))
-                            continue;
-                    }
+                    if (!(game.judgePiecesCanMove(PreviousBoard, board, pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second, isWhiteTurn, piece)))
+                        continue;
                     isWhiteTurn = !isWhiteTurn;
                     // 確保不是王車易位
+                    isCastling = board.isCastling(pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second);
                     if (!isCastling)
                     {
                         cerr << "[DEBUG]<Function Main>class:Main , Not Castling! Judging if got attack piece is King" << endl;
                         // 這裡看攻擊的棋子是否是王 代表被攻擊 被吃掉
-                        if (PreviousBoard[(positionToMoveTo.first - 'a')][(8 - positionToMoveTo.second)] == 'k')
+                        if (PreviousBoard[(8 - positionToMoveTo.second)][(positionToMoveTo.first - 'a')] == 'k')
                             White_King_Alive = false;
                         else if (PreviousBoard[(8 - positionToMoveTo.second)][(positionToMoveTo.first - 'a')] == 'K')
                             Black_King_Alive = false;
