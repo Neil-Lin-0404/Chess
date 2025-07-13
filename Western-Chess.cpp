@@ -35,9 +35,9 @@ namespace Messages
         cout << "Illegal Castling!" << endl;
     }
     // 被將軍時
-    void checkMate()
+    void check()
     {
-        cout << "Checkmate!" << endl;
+        cout << "Check!" << endl;
     }
     // 移動成功時
     void moveSuccess()
@@ -365,13 +365,11 @@ public:
         cerr << "[DEBUG]<Function Enpassant>class:Board,Executing Enpassant move" << endl;
         if (isWhiteTurn)
         {
-            movePiece(fromRow, fromCol, toRow, toCol); // 前往斜對角
-            board[8 - toCol - 1][toRow - 'a'] = ' ';   // 吃子
+            board[8 - toCol - 1][toRow - 'a'] = ' '; // 吃子
         }
         else
         {
-            movePiece(fromRow, fromCol, toRow, toCol); // 前往斜對角
-            board[8 - toCol + 1][toRow - 'a'] = ' ';   // 吃子
+            board[8 - toCol + 1][toRow - 'a'] = ' '; // 吃子
         }
     }
 };
@@ -389,9 +387,13 @@ public:
     { // 如果不是同一行
         cerr << "[DEBUG]<Function canMove>class:Pawn , Executed Pawn canMove function!" << endl;
         bool firstMove = false;
-        if (fromCol == 2 || 7)
+        cerr << "[DEBUG]<Function canMove>class:Pawn,fromCol = " << fromCol << endl;
+        cerr << "[DEBUG]<Function canMove>class:Pawn,Before if firstMove = " << firstMove << endl;
+        if (fromCol == 2 || fromCol == 7)
+        {
             firstMove = true; // 給以後判斷移動是否合法(第一次移動)
-        cerr << "[DEBUG]<Function canMove>class:Pawn,firstMove = " << firstMove << endl;
+        }
+        cerr << "[DEBUG]<Function canMove>class:Pawn,after If firstMove = " << firstMove << endl;
         if (fromRow != toRow) // 如果不同row
         {
             // 看是否能攻打
@@ -415,7 +417,21 @@ public:
         if (isWhiteTurn)
         {
             cerr << "[DEBUG]<Function canMove>class:Pawn , Pawn is WhiteTurn judging Executed!" << endl;
-            if ((fromCol - toCol != 1) && (firstMove && fromCol - toCol != 2)) // 因為是白方 所以是上到下 fromCol - toCol = 1 || 2
+            if (firstMove && fromCol - toCol == 2)
+            { // 看是否中間友值 會block住
+                if (board.isOccupied(toRow, toCol))
+                {
+                    cerr << "[DEBUG]<Function canMove>class:Pawn,FirstMove and Moved two blocks but there's a piece blocked the path" << endl;
+                    return 0;
+                }
+                if (board.isOccupied(toRow, 6))
+                {
+                    cerr << "[DEBUG]<Function canMove>class:Pawn,FirstMove and Moved two blocks but there's a piece blocked the path" << endl;
+                    return 0;
+                }
+                return 1;
+            }
+            if (fromCol - toCol != 1) // 因為是白方 所以是上到下 fromCol - toCol = 1 || 2
             {
                 cerr << "[DEBUG]<Function canMove>class:Pawn , fromCol - toCol result = " << fromCol - toCol << endl;
                 Messages::illegalMove();
@@ -426,7 +442,21 @@ public:
         else
         {
             cerr << "[DEBUG]<Function canMove>class:Pawn ,Pawn is BlackTurn judging Executed!" << endl;
-            if ((toCol - fromCol != 1) && (firstMove && toCol - fromCol != 2)) // 因為是白方 所以是上到下 toCol - fromCol = 1 || 2
+            if (firstMove && toCol - fromCol == 2)
+            { // 看是否中間友值 會block住
+                if (board.isOccupied(toRow, toCol))
+                {
+                    cerr << "[DEBUG]<Function canMove>class:Pawn,FirstMove and Moved two blocks but there's a piece blocked the path" << endl;
+                    return 0;
+                }
+                if (board.isOccupied(toRow, 3))
+                {
+                    cerr << "[DEBUG]<Function canMove>class:Pawn,FirstMove and Moved two blocks but there's a piece blocked the path" << endl;
+                    return 0;
+                }
+                return 1;
+            }
+            if (toCol - fromCol != 1) // 因為是白方 所以是上到下 toCol - fromCol = 1 || 2
             {
                 cerr << "[DEBUG]<Function canMove>class:Pawn , toCol - fromCol result = " << toCol - fromCol << endl;
                 Messages::illegalMove();
@@ -439,8 +469,6 @@ public:
             cerr << "[DEBUG]<Function canMove>class:Pawn ,Pawn toRow toCol is Occupied! Returning False" << endl;
             return false; // 假設這裡是偵測是有棋子
         }
-        board.movePiece(fromRow, fromCol, toRow, toCol); // 移動棋子
-        Messages::moveSuccess();
         if (canPromote(toCol)) // 看是不是可以升變
         {
             cerr << "[DEBUG]<Function canMove>class:Pawn , Executing Promoting Process!" << endl;
@@ -471,7 +499,7 @@ public:
                     return false; // 同隊不能攻擊
                 }
                 cerr << "[DEBUG]<Function canAttack>class:Pawn , Returning True!" << endl;
-                board.movePiece(fromRow, fromCol, toRow, toCol);
+
                 return true; // 可以攻擊
             }
         }
@@ -537,7 +565,7 @@ public:
                 }
             }
             // 移動
-            board.movePiece(fromRow, fromCol, toRow, toCol);
+
             return 1;
         }
         // 如果上面條件事都沒進去那 我也不知道 就回傳0
@@ -576,8 +604,7 @@ public:
         // 如果移動合法 那就movePiece
         if (moveValid)
         {
-            board.movePiece(fromRow, fromCol, toRow, toCol);
-            Messages::moveSuccess();
+
             return 1;
         }
         cerr << "[DEBUG]<Function canMove>class:Knight , moveValid isn't Valid!" << endl;
@@ -621,7 +648,7 @@ public:
             return 0;
             cerr << "[DEBUG]<Function canMove>class:Bishop , OCCUPIED BUT NOT ON SAMETEAM , canATTACK! , return 1" << endl;
         }
-        board.movePiece(fromRow, fromCol, toRow, toCol);
+
         Messages::moveSuccess();
         return 1;
     }
@@ -662,7 +689,7 @@ public:
                     return 0;
                 }
             }
-            board.movePiece(fromRow, fromCol, toRow, toCol);
+
             return 1;
         }
         else if (direction == "diagonal")
@@ -681,8 +708,7 @@ public:
                 return 0;
                 cerr << "[DEBUG]<Function canMove>class:Queen , OCCUPIED BUT NOT ON SAMETEAM , canATTACK! , return 1" << endl;
             }
-            board.movePiece(fromRow, fromCol, toRow, toCol);
-            Messages::moveSuccess();
+
             return 1;
         }
         return 0;
@@ -715,6 +741,14 @@ public:
     {
         cerr << "[DEBUG]<Function canMoveAllJudge>class:=King , Entered canMoveAllJudge function" << endl;
         // TODO 記得先判斷是否為castling 再進行canMove canAttack 判斷function
+        if (canMoveOrAttack(board, fromRow, fromCol, toRow, toCol, isWhiteTurn)) // 如果可以移動或攻打 return true
+        {
+            cerr << "[DEBUG]<Function canMoveAllJudge>class:King , returning true for canMoveoOrAttack" << endl;
+            return true;
+        }
+        checkMate check;
+        if (check.nextStepInCheck(board, toRow, toCol, isWhiteTurn))
+            return 0;
         if (canCastling(board, fromRow, fromCol, toRow, toCol)) // 如果可以入堡 即成功 return true
         {
             cerr << "[DEBUG]<Function canMoveAllJudge>class:King , returning true for canCastling" << endl;
@@ -722,11 +756,6 @@ public:
         }
         cerr << "[DEBUG]<Function canMoveAllJudge>class:King,canCastling = false" << endl;
         cerr << "[DEBUG]<Function canMoveAllJudge>class:King, Entering canMoveOrAttack function" << endl;
-        if (canMoveOrAttack(board, fromRow, fromCol, toRow, toCol, isWhiteTurn)) // 如果可以移動或攻打 return true
-        {
-            cerr << "[DEBUG]<Function canMoveAllJudge>class:King , returning true for canMoveoOrAttack" << endl;
-            return true;
-        }
         // 否則return false
         cerr << "[DEBUG]<Function canMoveAllJudge>class:King , returning false" << endl;
         return false;
@@ -781,39 +810,148 @@ public:
     class checkMate
     {
     public:
-        pair<char, int> blackKingPosition, whiteKingPosition;
-        Game game;
+        // 每次移動都先進temp 如果可以 那就改變king pos 否則不要改
+        pair<char, int> blackKingPosition, whiteKingPosition, tempBlack, tempWhite;
         checkMate()
         {
+            cerr << "[DEBUG]<Function None>class:King::checkmate>Getting Kings Position" << endl;
             blackKingPosition = {'e', 1};
             whiteKingPosition = {'e', 8};
+            tempBlack = blackKingPosition;
+            tempWhite = whiteKingPosition;
         }
-        bool isInCheck()
+        void isInCheck(Board &board, bool isWhiteTurn)
         {
+            cerr << "[DEBUG]<Function isInCheck>class:King::checkmate,Entered isInCheck Function!" << endl;
+            // 檢查 橫向(Row)
+            // 檢查 縱向(Column) for Rook
+            // 斜邊(Diagonal) for Bishop Queen
+            // 斜邊for Pawn
+            // 上下第二格的左右邊 左右第二格的上下邊 for Knight
             // 每一回合都檢查 且提醒使用者
+            if (Check_Horizontal_Vertical_Diagonal_Can_CheckMate(board, isWhiteTurn))
+                Messages::check();
         }
-        bool nextStepInCheck()
+        bool nextStepInCheck(Board &board, char toRow, int toCol, bool isWhiteTurn)
         {
             // 移動王時檢查 然後要提醒使用者
-        }
-        bool canEscapeCheck()
-        {
-            // inCheck 或 nextStepInCheck時檢查 使用者操控 然後檢查是否合法
-        }
-        void updateKingPosition(char toRow, int toCol, bool isWhiteTurn)
-        {
+            cerr << "[DEBUG]<Function nextStepInCheck>class:King::checkmate,Entered nextStepInCheck Function!" << endl;
             if (isWhiteTurn)
-                whiteKingPosition = {toRow, toCol};
+                tempWhite = {toRow, toCol};
             else
-                blackKingPosition = {toRow, toCol};
+                tempBlack = {toRow, toCol};
+            if (!(Check_Horizontal_Vertical_Diagonal_Can_CheckMate(board, isWhiteTurn)))
+            {
+                updateKingPosition(isWhiteTurn);
+                return 0;
+            }
+            // 移動王時檢查 然後要提醒使用者
+            return 1;
         }
-        bool Check_Horziontal_Vertical_Diagonal_Can_CheckMate(vector<vector<char>> board, char HoVoD, bool isWhiteTurn)
+        void updateKingPosition(bool isWhiteTurn)
         {
+            cerr << "[DEBUG]<Function updateKingPosition>class:King::checkmate,Entered updateKingPosition Function!" << endl;
+            if (isWhiteTurn)
+            {
+                whiteKingPosition = tempWhite;
+                cerr << "[DEBUG]<Function updateKingPosition>class:King::checkmate, whiteKingPosition: " << whiteKingPosition.first << ' ' << whiteKingPosition.second << endl;
+            }
+            else
+            {
+                blackKingPosition = tempBlack;
+
+                cerr << "[DEBUG]<Function updateKingPosition>class:King::checkmate, BlackKingPosition: " << blackKingPosition.first << ' ' << blackKingPosition.second << endl;
+            }
+        }
+        bool Check_Horizontal_Vertical_Diagonal_Can_CheckMate(Board &board, bool isWhiteTurn)
+        {
+            vector<vector<char>> tempBoard = board.board;
+            cerr << "[DEBUG]<Function Check_Horizontal_Vertical_Diagonal_Can_CheckMate>class:King::checkmate,Entered Check_Horizontal_Vertical_Diagonal_Can_CheckMate Function!" << endl;
+            // HoVoD = Horziontal or Vertical or Diagonal
             bool
-                King_On_Check_H = false,
-                King_On_Check_V = false,
-                King_On_Check_D = false;
-            
+                King_On_Check = false;
+            for (int column = 0; column < 8; column++)
+            {
+                for (int row = 0; row < 8; row++)
+                {
+                    char piece = tempBoard[column][row];
+                    if (isWhiteTurn)
+                    {
+                        char curRow = tempWhite.first;
+                        int curColumn = tempWhite.second;
+                        if (piece == 'P')
+                        {
+                            Pawn pawn;
+                            if (pawn.canAttack(tempBoard, board, row, column, curRow, curColumn, isWhiteTurn))
+                                King_On_Check = true;
+                        }
+                        else if (piece == 'B')
+                        {
+                            Bishop bishop;
+                            if (bishop.canMove(board, row, column, curRow, curColumn, isWhiteTurn))
+                                King_On_Check = true;
+                        }
+                        else if (piece == 'R')
+                        {
+                            Rook rook;
+                            if (rook.canMove(board, row, column, curRow, curColumn, isWhiteTurn))
+                                King_On_Check = true;
+                        }
+                        else if (piece == 'N')
+                        {
+                            Knight knight;
+                            if (knight.canMove(board, row, column, curRow, curColumn, isWhiteTurn))
+                                King_On_Check = true;
+                        }
+                        else if (piece == 'Q')
+                        {
+                            Queen queen;
+                            if (queen.canMove(board, row, column, curRow, curColumn, isWhiteTurn))
+                                King_On_Check = true;
+                        }
+                    }
+                    else
+                    {
+                        char curRow = tempBlack.first;
+                        int curColumn = tempBlack.second;
+                        if (piece == 'p')
+                        {
+                            Pawn pawn;
+                            if (pawn.canMove(tempBoard, board, row, column, curRow, curColumn, isWhiteTurn))
+                                King_On_Check = true;
+                        }
+                        else if (piece == 'b')
+                        {
+                            Bishop bishop;
+                            if (bishop.canMove(board, row, column, curRow, curColumn, isWhiteTurn))
+                                King_On_Check = true;
+                        }
+                        else if (piece == 'r')
+                        {
+                            Rook rook;
+                            if (rook.canMove(board, row, column, curRow, curColumn, isWhiteTurn))
+                                King_On_Check = true;
+                        }
+                        else if (piece == 'n')
+                        {
+                            Knight knight;
+                            if (knight.canMove(board, row, column, curRow, curColumn, isWhiteTurn))
+                                King_On_Check = true;
+                        }
+                        else if (piece == 'q')
+                        {
+                            Queen queen;
+                            if (queen.canMove(board, row, column, curRow, curColumn, isWhiteTurn))
+                                King_On_Check = true;
+                        }
+                    }
+                    if (King_On_Check)
+                    cerr << "[DEBUG]<Function Check_Horizontal_Vertical_Diagonal_Can_CheckMate>class:King::checkmate,Returning True!" << endl;
+                        return true;
+                }
+            }
+            cerr << "[DEBUG]<Function Check_Horizontal_Vertical_Diagonal_Can_CheckMate>class:King::checkmate,Returning False!" << endl;
+            return false;
         }
     };
 };
@@ -953,6 +1091,7 @@ int main()
             {
                 Board board;
                 Game game;
+                King::checkMate isCheck;
                 vector<vector<char>> PreviousBoard = board.board; // 這裡算是有點懶吧 哈哈 紀錄上一回合的棋盤
                 // 先設好變數
                 bool whiteLeftRook = false, whiteRightRook = false, blackLeftRook = false, blackRightRook = false;
@@ -973,7 +1112,10 @@ int main()
                     char movePiece = board.whatPieceisit(pieceToMove.first, pieceToMove.second);
                     if (!(game.judgePiecesCanMove(PreviousBoard, board, pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second, isWhiteTurn, piece)))
                         continue;
+                    board.movePiece(pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second);
+                    isCheck.isInCheck(board, isWhiteTurn);
                     isWhiteTurn = !isWhiteTurn;
+
                     // 確保不是王車易位
                     isCastling = board.isCastling(pieceToMove.first, pieceToMove.second, positionToMoveTo.first, positionToMoveTo.second);
                     if (!isCastling)
